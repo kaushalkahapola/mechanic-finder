@@ -32,15 +32,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '201':
+        "201":
           description: User registered successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
           description: Invalid input
   /auth/login:
     post:
@@ -52,15 +52,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Authentication successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
           description: Invalid credentials
   /auth/refresh:
     post:
@@ -72,15 +72,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshRequest'
+              $ref: "#/components/schemas/RefreshRequest"
       responses:
-        '200':
+        "200":
           description: Token refreshed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
           description: Invalid refresh token
   /auth/logout:
     post:
@@ -88,7 +88,7 @@ paths:
         - Auth
       summary: Logout user and invalidate tokens
       responses:
-        '204':
+        "204":
           description: Logout successful
   /users/me:
     get:
@@ -98,13 +98,13 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: User profile retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '401':
+                $ref: "#/components/schemas/UserProfile"
+        "401":
           description: Unauthorized
     put:
       tags:
@@ -117,17 +117,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserProfileRequest'
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
       responses:
-        '200':
+        "200":
           description: User profile updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '400':
+                $ref: "#/components/schemas/UserProfile"
+        "400":
           description: Invalid input
-        '401':
+        "401":
           description: Unauthorized
   /mechanics:
     get:
@@ -154,14 +154,14 @@ paths:
           required: false
           description: Search radius in kilometers
       responses:
-        '200':
+        "200":
           description: List of mechanics retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MechanicProfile'
+                  $ref: "#/components/schemas/MechanicProfile"
   /mechanics/profile:
     get:
       tags:
@@ -170,13 +170,13 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Mechanic profile retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MechanicProfile'
-        '401':
+                $ref: "#/components/schemas/MechanicProfile"
+        "401":
           description: Unauthorized
     post:
       tags:
@@ -189,18 +189,77 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MechanicProfileRequest'
+              $ref: "#/components/schemas/MechanicProfileRequest"
       responses:
-        '200':
+        "200":
           description: Mechanic profile created or updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MechanicProfile'
-        '400':
+                $ref: "#/components/schemas/MechanicProfile"
+        "400":
           description: Invalid input
-        '401':
+        "401":
           description: Unauthorized
+  /mechanics/location:
+    put:
+      tags:
+        - Mechanics
+      summary: Update mechanic's current location and availability
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMechanicLocationRequest"
+      responses:
+        "200":
+          description: Location updated successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Not a mechanic
+  /mechanics/nearby:
+    get:
+      tags:
+        - Mechanics
+      summary: Find nearby available mechanics
+      parameters:
+        - in: query
+          name: latitude
+          schema:
+            type: number
+          required: true
+          description: Current latitude
+        - in: query
+          name: longitude
+          schema:
+            type: number
+          required: true
+          description: Current longitude
+        - in: query
+          name: radius
+          schema:
+            type: number
+          required: false
+          description: Search radius in kilometers (default 10)
+        - in: query
+          name: serviceType
+          schema:
+            type: string
+          required: false
+          description: Filter by specific service type
+      responses:
+        "200":
+          description: List of nearby mechanics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MechanicProfile"
   /bookings:
     post:
       tags:
@@ -213,17 +272,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBookingRequest'
+              $ref: "#/components/schemas/CreateBookingRequest"
       responses:
-        '201':
+        "201":
           description: Booking created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
-        '400':
+                $ref: "#/components/schemas/Booking"
+        "400":
           description: Invalid input
-        '401':
+        "401":
           description: Unauthorized
     get:
       tags:
@@ -232,15 +291,15 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of bookings retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Booking'
-        '401':
+                  $ref: "#/components/schemas/Booking"
+        "401":
           description: Unauthorized
   /bookings/{bookingId}:
     get:
@@ -256,15 +315,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Booking details retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
-        '401':
+                $ref: "#/components/schemas/Booking"
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Booking not found
     put:
       tags:
@@ -283,19 +342,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateBookingStatusRequest'
+              $ref: "#/components/schemas/UpdateBookingStatusRequest"
       responses:
-        '200':
+        "200":
           description: Booking status updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
-        '400':
+                $ref: "#/components/schemas/Booking"
+        "400":
           description: Invalid input
-        '401':
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Booking not found
   /reviews:
     post:
@@ -309,17 +368,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReviewRequest'
+              $ref: "#/components/schemas/CreateReviewRequest"
       responses:
-        '201':
+        "201":
           description: Review submitted successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
-        '400':
+                $ref: "#/components/schemas/Review"
+        "400":
           description: Invalid input
-        '401':
+        "401":
           description: Unauthorized
   /reviews/{mechanicId}:
     get:
@@ -333,15 +392,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: List of reviews retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Review'
-        '404':
+                  $ref: "#/components/schemas/Review"
+        "404":
           description: Mechanic not found
   /admin/users:
     get:
@@ -351,15 +410,15 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of users retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserProfile'
-        '401':
+                  $ref: "#/components/schemas/UserProfile"
+        "401":
           description: Unauthorized
   /admin/mechanics:
     get:
@@ -369,15 +428,15 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of mechanics retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MechanicProfile'
-        '401':
+                  $ref: "#/components/schemas/MechanicProfile"
+        "401":
           description: Unauthorized
   /notifications:
     get:
@@ -387,15 +446,15 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of notifications retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Notification'
-        '401':
+                  $ref: "#/components/schemas/Notification"
+        "401":
           description: Unauthorized
     post:
       tags:
@@ -417,11 +476,11 @@ paths:
               required:
                 - notificationIds
       responses:
-        '200':
+        "200":
           description: Notifications marked as read successfully
-        '400':
+        "400":
           description: Invalid input
-        '401':
+        "401":
           description: Unauthorized
 components:
   securitySchemes:
@@ -478,7 +537,7 @@ components:
         refreshToken:
           type: string
         user:
-          $ref: '#/components/schemas/UserProfile'
+          $ref: "#/components/schemas/UserProfile"
 
     UserProfile:
       type: object
@@ -539,13 +598,19 @@ components:
             type: string
         experienceYears:
           type: integer
-        location:
+        currentLocation:
           type: object
           properties:
             latitude:
               type: number
             longitude:
               type: number
+        lastLocationUpdate:
+          type: string
+          format: date-time
+        serviceRadiusKm:
+          type: number
+          default: 10.0
 
     MechanicProfileRequest:
       type: object
@@ -562,24 +627,42 @@ components:
             type: string
         experienceYears:
           type: integer
-        location:
-          type: object
-          properties:
-            latitude:
-              type: number
-            longitude:
-              type: number
+        serviceRadiusKm:
+          type: number
       required:
         - services
         - availability
         - experienceYears
-        - location
+
+    UpdateMechanicLocationRequest:
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+        availability:
+          type: boolean
+      required:
+        - latitude
+        - longitude
+        - availability
 
     CreateBookingRequest:
       type: object
       properties:
         mechanicId:
           type: string
+        serviceLocation:
+          type: object
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
+          required:
+            - latitude
+            - longitude
         scheduledTime:
           type: string
           format: date-time
@@ -589,6 +672,7 @@ components:
           type: string
       required:
         - mechanicId
+        - serviceLocation
         - serviceType
 
     UpdateBookingStatusRequest:
