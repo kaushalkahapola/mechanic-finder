@@ -76,6 +76,7 @@ CREATE TABLE Reviews (
     rating DECIMAL(3, 2) NOT NULL CHECK (rating >= 0 AND rating <= 5),
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES Users(id),
     FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
 );
