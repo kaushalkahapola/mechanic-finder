@@ -133,26 +133,54 @@ paths:
     get:
       tags:
         - Mechanics
-      summary: List available mechanics
+      summary: Find mechanics with optional location-based filtering
       parameters:
         - in: query
           name: latitude
           schema:
             type: number
-          required: true
-          description: Latitude for location-based search
+            minimum: -90
+            maximum: 90
+          required: false
+          description: Latitude for location-based search (default 0)
         - in: query
           name: longitude
           schema:
             type: number
-          required: true
-          description: Longitude for location-based search
+            minimum: -180
+            maximum: 180
+          required: false
+          description: Longitude for location-based search (default 0)
         - in: query
           name: radius
           schema:
             type: number
+            minimum: 0
+            maximum: 20000
           required: false
-          description: Search radius in kilometers
+          description: Search radius in kilometers (default 10)
+        - in: query
+          name: serviceType
+          schema:
+            type: string
+            enum:
+              - "Tire Change"
+              - "Oil Change"
+              - "Battery Replacement"
+              - "Engine Repair"
+              - "Brake Service"
+              - "Towing"
+              - "Jump Start"
+              - "Fuel Delivery"
+              - "Lockout Service"
+          required: false
+          description: Filter mechanics by service type
+        - in: query
+          name: useLocation
+          schema:
+            type: boolean
+          required: false
+          description: Whether to use location-based filtering (default false)
       responses:
         "200":
           description: List of mechanics retrieved successfully
@@ -178,6 +206,10 @@ paths:
                 $ref: "#/components/schemas/MechanicProfile"
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden - Not a mechanic
+        "404":
+          description: Profile not found
     post:
       tags:
         - Mechanics
@@ -201,6 +233,8 @@ paths:
           description: Invalid input
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden - Not a mechanic
   /mechanics/location:
     put:
       tags:
@@ -221,6 +255,8 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden - Not a mechanic
+        "404":
+          description: Mechanic profile not found
   /mechanics/nearby:
     get:
       tags:
@@ -614,6 +650,19 @@ components:
           type: array
           items:
             type: string
+            enum:
+              [
+                "Tire Change",
+                "Oil Change",
+                "Battery Replacement",
+                "Engine Repair",
+                "Brake Service",
+                "Towing",
+                "Jump Start",
+                "Fuel Delivery",
+                "Lockout Service",
+              ]
+          minItems: 1
         availability:
           type: boolean
         certifications:
@@ -622,8 +671,13 @@ components:
             type: string
         experienceYears:
           type: integer
+          minimum: 0
+          maximum: 50
         serviceRadiusKm:
           type: number
+          minimum: 1
+          maximum: 100
+          default: 10
       required:
         - services
         - availability
@@ -634,8 +688,12 @@ components:
       properties:
         latitude:
           type: number
+          minimum: -90
+          maximum: 90
         longitude:
           type: number
+          minimum: -180
+          maximum: 180
         availability:
           type: boolean
       required:
