@@ -320,21 +320,87 @@ paths:
           description: Invalid input
         "401":
           description: Unauthorized
+        "404":
+          description: Mechanic not found
     get:
       tags:
         - Bookings
       summary: List bookings for current user
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, accepted, completed, canceled]
+          required: false
+          description: Filter bookings by status
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Filter bookings from this date
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Filter bookings until this date
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          required: false
+          description: Number of items per page
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [created_at, scheduled_time]
+            default: scheduled_time
+          required: false
+          description: Sort field
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          required: false
+          description: Sort order
       responses:
         "200":
           description: List of bookings retrieved successfully
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Booking"
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  totalPages:
+                    type: integer
         "401":
           description: Unauthorized
   /bookings/{bookingId}:
@@ -347,9 +413,10 @@ paths:
       parameters:
         - in: path
           name: bookingId
-          required: true
           schema:
             type: string
+          required: true
+          description: ID of the booking
       responses:
         "200":
           description: Booking details retrieved successfully
@@ -359,6 +426,8 @@ paths:
                 $ref: "#/components/schemas/Booking"
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden - Not authorized to view this booking
         "404":
           description: Booking not found
     put:
@@ -370,18 +439,19 @@ paths:
       parameters:
         - in: path
           name: bookingId
-          required: true
           schema:
             type: string
+          required: true
+          description: ID of the booking
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateBookingStatusRequest"
+              $ref: "#/components/schemas/UpdateBookingRequest"
       responses:
         "200":
-          description: Booking status updated successfully
+          description: Booking updated successfully
           content:
             application/json:
               schema:
@@ -390,6 +460,8 @@ paths:
           description: Invalid input
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden - Not authorized to update this booking
         "404":
           description: Booking not found
   /reviews:
@@ -711,8 +783,12 @@ components:
           properties:
             latitude:
               type: number
+              minimum: -90
+              maximum: 90
             longitude:
               type: number
+              minimum: -180
+              maximum: 180
           required:
             - latitude
             - longitude
@@ -721,19 +797,51 @@ components:
           format: date-time
         serviceType:
           type: string
+          enum:
+            - "Tire Change"
+            - "Oil Change"
+            - "Battery Replacement"
+            - "Engine Repair"
+            - "Brake Service"
+            - "Towing"
+            - "Jump Start"
+            - "Fuel Delivery"
+            - "Lockout Service"
         issueDescription:
           type: string
+        estimatedDuration:
+          type: integer
+          minimum: 1
+          description: Estimated duration in minutes
+        estimatedCost:
+          type: number
+          minimum: 0
+          description: Estimated cost of the service
       required:
         - mechanicId
         - serviceLocation
+        - scheduledTime
         - serviceType
+        - estimatedDuration
+        - estimatedCost
 
-    UpdateBookingStatusRequest:
+    UpdateBookingRequest:
       type: object
       properties:
         status:
           type: string
           enum: [pending, accepted, completed, canceled]
+        cancellationReason:
+          type: string
+          description: Required if status is canceled
+        actualDuration:
+          type: integer
+          minimum: 1
+          description: Required if status is completed (in minutes)
+        finalCost:
+          type: number
+          minimum: 0
+          description: Required if status is completed
       required:
         - status
 
@@ -746,15 +854,49 @@ components:
           type: string
         mechanicId:
           type: string
+        serviceLocation:
+          type: object
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
         scheduledTime:
           type: string
           format: date-time
         serviceType:
           type: string
-        status:
-          type: string
         issueDescription:
           type: string
+        estimatedDuration:
+          type: integer
+        actualDuration:
+          type: integer
+        estimatedCost:
+          type: number
+        finalCost:
+          type: number
+        status:
+          type: string
+          enum: [pending, accepted, completed, canceled]
+        paymentStatus:
+          type: string
+          enum: [pending, paid, refunded]
+        cancellationReason:
+          type: string
+        completionTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        mechanic:
+          $ref: "#/components/schemas/MechanicProfile"
+        user:
+          $ref: "#/components/schemas/UserProfile"
 
     CreateReviewRequest:
       type: object

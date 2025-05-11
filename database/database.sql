@@ -41,7 +41,6 @@ CREATE TABLE Mechanics (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
--- Bookings Table
 CREATE TABLE Bookings (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
@@ -51,11 +50,22 @@ CREATE TABLE Bookings (
     scheduled_time DATETIME NOT NULL,
     service_type VARCHAR(255) NOT NULL,
     issue_description TEXT,
+    estimated_duration INT NOT NULL,
+    actual_duration INT,
+    estimated_cost DECIMAL(10, 2) NOT NULL,
+    final_cost DECIMAL(10, 2),
     status ENUM('pending', 'accepted', 'completed', 'canceled') DEFAULT 'pending',
+    payment_status ENUM('pending', 'paid', 'refunded') DEFAULT 'pending',
+    cancellation_reason TEXT,
+    completion_time DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(id),
-    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    INDEX idx_status (status),
+    INDEX idx_user_status (user_id, status),
+    INDEX idx_mechanic_status (mechanic_id, status),
+    INDEX idx_scheduled_time (scheduled_time)
 );
 
 -- Reviews Table
