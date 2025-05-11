@@ -554,13 +554,12 @@ components:
           enum: [user, mechanic, admin]
         phone:
           type: string
-        location:
-          type: object
-          properties:
-            latitude:
-              type: number
-            longitude:
-              type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     UpdateUserProfileRequest:
       type: object
@@ -569,13 +568,9 @@ components:
           type: string
         phone:
           type: string
-        location:
-          type: object
-          properties:
-            latitude:
-              type: number
-            longitude:
-              type: number
+      required:
+        - name
+        - phone
 
     MechanicProfile:
       type: object
