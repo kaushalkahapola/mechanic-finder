@@ -220,3 +220,131 @@ WHERE m.availability = TRUE;
 CREATE INDEX idx_user_email ON Users(email);
 CREATE INDEX idx_booking_user_id ON Bookings(user_id);
 CREATE INDEX idx_review_mechanic_id ON Reviews(mechanic_id);
+
+-- new alters and tables (need to change)
+-- Add to Mechanics table
+ALTER TABLE Mechanics ADD COLUMN working_hours JSON;
+ALTER TABLE Mechanics ADD COLUMN is_online BOOLEAN DEFAULT FALSE;
+ALTER TABLE Mechanics ADD COLUMN last_online TIMESTAMP;
+ALTER TABLE Mechanics ADD COLUMN emergency_available BOOLEAN DEFAULT FALSE;
+
+-- Track location history
+CREATE TABLE MechanicLocationHistory (
+    id CHAR(36) PRIMARY KEY,
+    mechanic_id CHAR(36) NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
+);
+
+CREATE TABLE ServiceTypes (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    base_price DECIMAL(10, 2),
+    emergency_surcharge DECIMAL(10, 2),
+    estimated_duration INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE MechanicServices (
+    mechanic_id CHAR(36),
+    service_id CHAR(36),
+    custom_price DECIMAL(10, 2),
+    is_emergency_available BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (mechanic_id, service_id),
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    FOREIGN KEY (service_id) REFERENCES ServiceTypes(id)
+);
+
+CREATE TABLE ServiceTypes (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    base_price DECIMAL(10, 2),
+    emergency_surcharge DECIMAL(10, 2),
+    estimated_duration INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE MechanicServices (
+    mechanic_id CHAR(36),
+    service_id CHAR(36),
+    custom_price DECIMAL(10, 2),
+    is_emergency_available BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (mechanic_id, service_id),
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    FOREIGN KEY (service_id) REFERENCES ServiceTypes(id)
+);
+
+-- Add to Bookings table
+ALTER TABLE Bookings 
+    ADD COLUMN is_emergency BOOLEAN DEFAULT FALSE,
+    ADD COLUMN emergency_description TEXT,
+    ADD COLUMN response_time INT,
+    ADD COLUMN emergency_contact VARCHAR(255);
+
+-- Emergency Contact Information
+CREATE TABLE EmergencyContacts (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(15) NOT NULL,
+    relationship VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+
+CREATE TABLE Transactions (
+    id CHAR(36) PRIMARY KEY,
+    booking_id CHAR(36) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    payment_method VARCHAR(50),
+    payment_reference VARCHAR(255),
+    refund_reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES Bookings(id)
+);
+
+CREATE TABLE TransactionHistory (
+    id CHAR(36) PRIMARY KEY,
+    transaction_id CHAR(36) NOT NULL,
+    status ENUM('pending', 'completed', 'failed', 'refunded'),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (transaction_id) REFERENCES Transactions(id)
+);
+
+CREATE TABLE ServiceStatistics (
+    id CHAR(36) PRIMARY KEY,
+    mechanic_id CHAR(36),
+    service_type_id CHAR(36),
+    total_bookings INT DEFAULT 0,
+    completed_bookings INT DEFAULT 0,
+    canceled_bookings INT DEFAULT 0,
+    average_response_time INT,
+    average_rating DECIMAL(3,2),
+    total_revenue DECIMAL(10,2),
+    period_start DATE,
+    period_end DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id)
+);
+
+CREATE TABLE AreaStatistics (
+    id CHAR(36) PRIMARY KEY,
+    area_latitude DECIMAL(10, 8),
+    area_longitude DECIMAL(11, 8),
+    radius_km INT,
+    total_requests INT DEFAULT 0,
+    total_completed INT DEFAULT 0,
+    average_response_time INT,
+    peak_hours JSON,
+    period_start DATE,
+    period_end DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

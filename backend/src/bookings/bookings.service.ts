@@ -62,7 +62,7 @@ export class BookingsService {
     }
 
     // Check if mechanic offers the service
-    if (!mechanic.services?.includes(serviceType)) {
+    if (!mechanic.mechanicServices?.some(ms => ms.serviceType.id === serviceType.id)) {
       throw new BadRequestException('Mechanic does not offer this service');
     }
 
@@ -91,7 +91,7 @@ export class BookingsService {
       serviceLocationLatitude: createBookingDto.serviceLocation.latitude,
       serviceLocationLongitude: createBookingDto.serviceLocation.longitude,
       scheduledTime: new Date(scheduledTime),
-      serviceType: serviceType,
+      serviceType: serviceType.id,
       issueDescription: createBookingDto.issueDescription,
       estimatedDuration: estimatedDuration,
       estimatedCost: createBookingDto.estimatedCost,

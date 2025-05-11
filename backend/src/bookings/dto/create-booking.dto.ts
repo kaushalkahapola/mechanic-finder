@@ -1,6 +1,15 @@
-import { IsString, IsNumber, IsDateString, IsEnum, Min, Max, ValidateNested, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsDateString,
+  IsEnum,
+  Min,
+  Max,
+  ValidateNested,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { MechanicService } from '../../mechanics/entities/mechanic.entity';
+import { ServiceType } from '../../service-types/entities/service-type.entity';
 
 class LocationDto {
   @IsNumber()
@@ -25,8 +34,8 @@ export class CreateBookingDto {
   @IsDateString()
   scheduledTime: string;
 
-  @IsEnum(MechanicService)
-  serviceType: MechanicService;
+  @IsEnum(ServiceType)
+  serviceType: ServiceType;
 
   @IsString()
   @IsOptional()
@@ -39,4 +48,4 @@ export class CreateBookingDto {
   @IsNumber()
   @Min(0)
   estimatedCost: number;
-} 
+}

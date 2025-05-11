@@ -1,25 +1,37 @@
-import { IsArray, IsBoolean, IsEnum, IsInt, IsNumber, Min, Max, ArrayMinSize } from 'class-validator';
-import { MechanicService } from '../entities/mechanic.entity';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  Min,
+  Max,
+  ArrayMinSize,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+import { ServiceType } from '../../service-types/entities/service-type.entity';
 
 export class CreateMechanicProfileDto {
   @IsArray()
-  @ArrayMinSize(1)
-  @IsEnum(MechanicService, { each: true })
-  services: MechanicService[];
+  @IsUUID('4', { each: true })
+  services: string[];
 
   @IsBoolean()
   availability: boolean;
 
   @IsArray()
-  certifications?: string[];
+  @IsString({ each: true })
+  certifications: string[];
 
-  @IsInt()
+  @IsNumber()
   @Min(0)
-  @Max(50)
   experienceYears: number;
 
   @IsNumber()
-  @Min(1)
-  @Max(100)
-  serviceRadiusKm?: number = 10;
-} 
+  @Min(0)
+  serviceRadiusKm: number;
+
+  @IsBoolean()
+  emergencyAvailable: boolean;
+}
