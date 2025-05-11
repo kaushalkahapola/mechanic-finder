@@ -1,14 +1,30 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindOptionsOrder, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import {
+  Repository,
+  Between,
+  FindOptionsOrder,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+} from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Booking, BookingStatus, PaymentStatus } from './entities/booking.entity';
+import {
+  Booking,
+  BookingStatus,
+  PaymentStatus,
+} from './entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { QueryBookingDto } from './dto/query-booking.dto';
 import { Mechanic } from '../mechanics/entities/mechanic.entity';
 import { User, UserRole } from '../user/entities/user.entity';
 import { MechanicsService } from '../mechanics/mechanics.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class BookingsService {
@@ -20,14 +36,20 @@ export class BookingsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly mechanicsService: MechanicsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
-  async create(userId: string, createBookingDto: CreateBookingDto): Promise<Booking> {
-    const { mechanicId, scheduledTime, serviceType, estimatedDuration } = createBookingDto;
+  async create(
+    userId: string,
+    createBookingDto: CreateBookingDto,
+  ): Promise<Booking> {
+    const { mechanicId, scheduledTime, serviceType, estimatedDuration } =
+      createBookingDto;
 
     // Check if mechanic exists
     const mechanic = await this.mechanicRepository.findOne({
-      where: { id: mechanicId }
+      where: { id: mechanicId },
+      relations: ['user'],
     });
 
     if (!mechanic) {
@@ -52,15 +74,14 @@ export class BookingsService {
       where: {
         mechanicId,
         status: BookingStatus.ACCEPTED,
-        scheduledTime: Between(
-          new Date(scheduledTime),
-          endTime,
-        ),
+        scheduledTime: Between(new Date(scheduledTime), endTime),
       },
     });
 
     if (overlappingBooking) {
-      throw new BadRequestException('Mechanic has another booking during this time');
+      throw new BadRequestException(
+        'Mechanic has another booking during this time',
+      );
     }
 
     const booking = this.bookingRepository.create({
@@ -79,13 +100,38 @@ export class BookingsService {
     });
 
     const savedBooking = await this.bookingRepository.save(booking);
+
+    // Create notification for mechanic
+    await this.notificationsService.create(
+      mechanic.user.id,
+      `New booking request for ${serviceType} service on ${new Date(scheduledTime).toLocaleString()}`,
+    );
+
     return this.findOne(userId, savedBooking.id);
   }
 
-  async findAll(userId: string, role: UserRole, queryDto: QueryBookingDto): Promise<{ items: Booking[]; total: number; page: number; totalPages: number }> {
-    const { status, startDate, endDate, page = 1, limit = 10, sort = 'scheduledTime', order = 'ASC' } = queryDto;
-    
-    const query = this.bookingRepository.createQueryBuilder('booking')
+  async findAll(
+    userId: string,
+    role: UserRole,
+    queryDto: QueryBookingDto,
+  ): Promise<{
+    items: Booking[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const {
+      status,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+      sort = 'scheduledTime',
+      order = 'ASC',
+    } = queryDto;
+
+    const query = this.bookingRepository
+      .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.mechanic', 'mechanic')
       .leftJoinAndSelect('booking.user', 'user')
       .leftJoinAndSelect('mechanic.user', 'mechanicUser');
@@ -146,8 +192,26 @@ export class BookingsService {
     return booking;
   }
 
-  async update(userId: string, role: UserRole, id: string, updateBookingDto: UpdateBookingDto): Promise<Booking> {
+  async update(
+    userId: string,
+    role: UserRole,
+    id: string,
+    updateBookingDto: UpdateBookingDto,
+  ): Promise<Booking> {
     const booking = await this.findOne(userId, id);
+
+    // Load related user and mechanic data for notifications
+    const [user, mechanic] = await Promise.all([
+      this.userRepository.findOne({ where: { id: booking.userId } }),
+      this.mechanicRepository.findOne({
+        where: { id: booking.mechanicId },
+        relations: ['user'],
+      }),
+    ]);
+
+    if (!user || !mechanic) {
+      throw new NotFoundException('Related user or mechanic not found');
+    }
 
     // Validate update permissions
     if (role === UserRole.MECHANIC && booking.mechanicId !== userId) {
@@ -158,22 +222,65 @@ export class BookingsService {
     }
 
     // Validate status transition
-    if (!this.isValidStatusTransition(booking.status, updateBookingDto.status, role)) {
+    if (
+      !this.isValidStatusTransition(
+        booking.status,
+        updateBookingDto.status,
+        role,
+      )
+    ) {
       throw new BadRequestException('Invalid status transition');
     }
 
     // Validate required fields based on status
-    if (updateBookingDto.status === BookingStatus.CANCELED && !updateBookingDto.cancellationReason) {
-      throw new BadRequestException('Cancellation reason is required when canceling a booking');
+    if (
+      updateBookingDto.status === BookingStatus.CANCELED &&
+      !updateBookingDto.cancellationReason
+    ) {
+      throw new BadRequestException(
+        'Cancellation reason is required when canceling a booking',
+      );
     }
     if (updateBookingDto.status === BookingStatus.COMPLETED) {
       if (!updateBookingDto.actualDuration) {
-        throw new BadRequestException('Actual duration is required when completing a booking');
+        throw new BadRequestException(
+          'Actual duration is required when completing a booking',
+        );
       }
       if (!updateBookingDto.finalCost) {
-        throw new BadRequestException('Final cost is required when completing a booking');
+        throw new BadRequestException(
+          'Final cost is required when completing a booking',
+        );
       }
       booking.completionTime = new Date();
+    }
+
+    // Create notifications based on status changes
+    if (updateBookingDto.status !== booking.status) {
+      switch (updateBookingDto.status) {
+        case BookingStatus.ACCEPTED:
+          await this.notificationsService.create(
+            booking.userId,
+            `Your booking for ${booking.serviceType} has been accepted by the mechanic`,
+          );
+          break;
+        case BookingStatus.COMPLETED:
+          await this.notificationsService.create(
+            booking.userId,
+            `Your booking for ${booking.serviceType} has been marked as completed`,
+          );
+          break;
+        case BookingStatus.CANCELED:
+          // Notify the other party about cancellation
+          const notifyUserId =
+            role === UserRole.USER ? mechanic.user.id : booking.userId;
+          const canceledBy = role === UserRole.USER ? 'customer' : 'mechanic';
+          await this.notificationsService.create(
+            notifyUserId,
+            `Booking for ${booking.serviceType} was canceled by ${canceledBy}. Reason: ${updateBookingDto.cancellationReason}`,
+          );
+          break;
+      }
     }
 
     // Update booking
@@ -181,7 +288,11 @@ export class BookingsService {
     return this.bookingRepository.save(booking);
   }
 
-  private isValidStatusTransition(currentStatus: string, newStatus: string, role: UserRole): boolean {
+  private isValidStatusTransition(
+    currentStatus: string,
+    newStatus: string,
+    role: UserRole,
+  ): boolean {
     const transitions = {
       [UserRole.USER]: {
         pending: ['canceled'],
@@ -195,4 +306,4 @@ export class BookingsService {
 
     return transitions[role]?.[currentStatus]?.includes(newStatus) ?? false;
   }
-} 
+}

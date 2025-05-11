@@ -12,6 +12,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { QueryReviewDto } from './dto/query-review.dto';
 import { Mechanic } from '../mechanics/entities/mechanic.entity';
 import { User, UserRole } from '../user/entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ReviewsService {
@@ -22,6 +23,7 @@ export class ReviewsService {
     private readonly mechanicRepository: Repository<Mechanic>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(
@@ -40,6 +42,15 @@ export class ReviewsService {
       throw new NotFoundException('Mechanic not found');
     }
 
+    // Get user info for notification
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     // Prevent self-reviews
     if (mechanic.user.id === userId) {
       throw new BadRequestException('Cannot review yourself');
@@ -51,32 +62,40 @@ export class ReviewsService {
       withDeleted: true,
     });
 
+    let savedReview: Review;
+
     if (existingReview) {
       if (existingReview.deletedAt) {
         // If the review was soft-deleted, restore it with new data
         existingReview.rating = rating;
         existingReview.comment = comment;
         existingReview.deletedAt = undefined;
-        const savedReview = await this.reviewRepository.save(existingReview);
-        await this.updateMechanicRating(mechanicId);
-        return this.findOne(savedReview.id);
+        savedReview = await this.reviewRepository.save(existingReview);
+      } else {
+        throw new BadRequestException(
+          'You have already reviewed this mechanic',
+        );
       }
-      throw new BadRequestException('You have already reviewed this mechanic');
+    } else {
+      // Create new review
+      const review = this.reviewRepository.create({
+        id: uuidv4(),
+        userId,
+        mechanicId,
+        rating,
+        comment,
+      });
+      savedReview = await this.reviewRepository.save(review);
     }
-
-    // Create review
-    const review = this.reviewRepository.create({
-      id: uuidv4(),
-      userId,
-      mechanicId,
-      rating,
-      comment,
-    });
-
-    const savedReview = await this.reviewRepository.save(review);
 
     // Update mechanic's average rating
     await this.updateMechanicRating(mechanicId);
+
+    // Create notification for mechanic
+    await this.notificationsService.create(
+      mechanic.user.id,
+      `${user.name} left you a ${rating}-star review${comment ? ': ' + comment : ''}`,
+    );
 
     return this.findOne(savedReview.id);
   }

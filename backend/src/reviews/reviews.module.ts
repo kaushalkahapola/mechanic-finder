@@ -5,9 +5,13 @@ import { ReviewsService } from './reviews.service';
 import { Review } from './entities/review.entity';
 import { Mechanic } from '../mechanics/entities/mechanic.entity';
 import { User } from '../user/entities/user.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Review, Mechanic, User])],
+  imports: [
+    TypeOrmModule.forFeature([Review, Mechanic, User]),
+    NotificationsModule,
+  ],
   controllers: [ReviewsController],
   providers: [ReviewsService],
   exports: [ReviewsService],
