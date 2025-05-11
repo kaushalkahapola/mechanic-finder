@@ -10,10 +10,19 @@ CREATE TABLE Users (
     password VARCHAR(255) NOT NULL,
     role ENUM('user', 'mechanic', 'admin') NOT NULL,
     phone VARCHAR(15),
-    latitude DECIMAL(10, 8),
-    longitude DECIMAL(11, 8),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Refresh Tokens Table
+CREATE TABLE RefreshTokens (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    token VARCHAR(500) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
 -- Mechanics Table
@@ -25,8 +34,10 @@ CREATE TABLE Mechanics (
     rating DECIMAL(3, 2) DEFAULT 0,
     certifications JSON,
     experience_years INT,
-    latitude DECIMAL(10, 8),
-    longitude DECIMAL(11, 8),
+    current_latitude DECIMAL(10, 8),
+    current_longitude DECIMAL(11, 8),
+    last_location_update TIMESTAMP,
+    service_radius_km DECIMAL(5, 2) DEFAULT 10.00,  -- Default 10km radius
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
@@ -35,6 +46,8 @@ CREATE TABLE Bookings (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
     mechanic_id CHAR(36) NOT NULL,
+    service_location_latitude DECIMAL(10, 8) NOT NULL,
+    service_location_longitude DECIMAL(11, 8) NOT NULL,
     scheduled_time DATETIME NOT NULL,
     service_type VARCHAR(255) NOT NULL,
     issue_description TEXT,
@@ -186,8 +199,8 @@ SELECT
     u.name,
     m.services,
     m.rating,
-    m.latitude,
-    m.longitude
+    m.current_latitude,
+    m.current_longitude
 FROM Mechanics m
 JOIN Users u ON m.user_id = u.id
 WHERE m.availability = TRUE;
