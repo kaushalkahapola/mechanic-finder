@@ -25,31 +25,35 @@ import { Mechanic } from '../mechanics/entities/mechanic.entity';
 import { User, UserRole } from '../user/entities/user.entity';
 import { MechanicsService } from '../mechanics/mechanics.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DataSource } from 'typeorm';
+import { BookingService } from './entities/booking-service.entity';
 
 @Injectable()
 export class BookingsService {
   constructor(
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    @InjectRepository(BookingService)
+    private readonly bookingServiceRepository: Repository<BookingService>,
     @InjectRepository(Mechanic)
     private readonly mechanicRepository: Repository<Mechanic>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly mechanicsService: MechanicsService,
     private readonly notificationsService: NotificationsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
     userId: string,
     createBookingDto: CreateBookingDto,
   ): Promise<Booking> {
-    const { mechanicId, scheduledTime, serviceType, estimatedDuration } =
-      createBookingDto;
+    const { mechanicId, scheduledTime, services } = createBookingDto;
 
     // Check if mechanic exists
     const mechanic = await this.mechanicRepository.findOne({
       where: { id: mechanicId },
-      relations: ['user'],
+      relations: ['user', 'mechanicServices', 'mechanicServices.serviceType'],
     });
 
     if (!mechanic) {
@@ -61,14 +65,28 @@ export class BookingsService {
       throw new BadRequestException('Scheduled time must be in the future');
     }
 
-    // Check if mechanic offers the service
-    if (!mechanic.services?.includes(serviceType)) {
-      throw new BadRequestException('Mechanic does not offer this service');
+    // Check if mechanic offers all requested services
+    for (const service of services) {
+      const offersService = mechanic.mechanicServices?.some(
+        (ms) => ms.serviceType.id === service.serviceTypeId,
+      );
+
+      if (!offersService) {
+        throw new BadRequestException(
+          `Mechanic does not offer service with ID ${service.serviceTypeId}`,
+        );
+      }
     }
+
+    // Calculate total duration for overlap checking
+    const totalDuration = services.reduce(
+      (sum, service) => sum + service.estimatedDuration,
+      0,
+    );
 
     // Check for overlapping bookings
     const endTime = new Date(scheduledTime);
-    endTime.setMinutes(endTime.getMinutes() + estimatedDuration);
+    endTime.setMinutes(endTime.getMinutes() + totalDuration);
 
     const overlappingBooking = await this.bookingRepository.findOne({
       where: {
@@ -84,30 +102,61 @@ export class BookingsService {
       );
     }
 
-    const booking = this.bookingRepository.create({
-      id: uuidv4(),
-      userId,
-      mechanicId,
-      serviceLocationLatitude: createBookingDto.serviceLocation.latitude,
-      serviceLocationLongitude: createBookingDto.serviceLocation.longitude,
-      scheduledTime: new Date(scheduledTime),
-      serviceType: serviceType,
-      issueDescription: createBookingDto.issueDescription,
-      estimatedDuration: estimatedDuration,
-      estimatedCost: createBookingDto.estimatedCost,
-      status: BookingStatus.PENDING,
-      paymentStatus: PaymentStatus.PENDING,
-    });
+    // Start a transaction
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const savedBooking = await this.bookingRepository.save(booking);
+    try {
+      // Create the booking
+      const bookingId = uuidv4();
+      const booking = this.bookingRepository.create({
+        id: bookingId,
+        userId,
+        mechanicId,
+        serviceLocationLatitude: createBookingDto.serviceLocation.latitude,
+        serviceLocationLongitude: createBookingDto.serviceLocation.longitude,
+        scheduledTime: new Date(scheduledTime),
+        issueDescription: createBookingDto.issueDescription,
+        estimatedDuration: totalDuration,
+        estimatedCost: services.reduce(
+          (sum, service) => sum + service.estimatedCost,
+          0,
+        ),
+        status: BookingStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
+      });
 
-    // Create notification for mechanic
-    await this.notificationsService.create(
-      mechanic.user.id,
-      `New booking request for ${serviceType} service on ${new Date(scheduledTime).toLocaleString()}`,
-    );
+      const savedBooking = await queryRunner.manager.save(booking);
 
-    return this.findOne(userId, savedBooking.id);
+      // Create booking services
+      const bookingServices = services.map((service) =>
+        this.bookingServiceRepository.create({
+          bookingId: savedBooking.id,
+          serviceTypeId: service.serviceTypeId,
+          estimatedDuration: service.estimatedDuration,
+          estimatedCost: service.estimatedCost,
+        }),
+      );
+
+      await queryRunner.manager.save(bookingServices);
+      await queryRunner.commitTransaction();
+
+      // Create notification for mechanic
+      await this.notificationsService.create(
+        mechanic.user.id,
+        `New booking request for multiple services on ${new Date(
+          scheduledTime,
+        ).toLocaleString()}`,
+      );
+
+      return this.findOne(userId, savedBooking.id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findAll(
@@ -178,7 +227,13 @@ export class BookingsService {
   async findOne(userId: string, id: string): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({
       where: { id },
-      relations: ['mechanic', 'user', 'mechanic.user'],
+      relations: [
+        'mechanic',
+        'user',
+        'mechanic.user',
+        'bookingServices',
+        'bookingServices.serviceType',
+      ],
     });
 
     if (!booking) {
@@ -261,13 +316,13 @@ export class BookingsService {
         case BookingStatus.ACCEPTED:
           await this.notificationsService.create(
             booking.userId,
-            `Your booking for ${booking.serviceType} has been accepted by the mechanic`,
+            `Your booking for ${booking.issueDescription} has been accepted by the mechanic`,
           );
           break;
         case BookingStatus.COMPLETED:
           await this.notificationsService.create(
             booking.userId,
-            `Your booking for ${booking.serviceType} has been marked as completed`,
+            `Your booking for ${booking.issueDescription} has been marked as completed`,
           );
           break;
         case BookingStatus.CANCELED:
@@ -277,7 +332,7 @@ export class BookingsService {
           const canceledBy = role === UserRole.USER ? 'customer' : 'mechanic';
           await this.notificationsService.create(
             notifyUserId,
-            `Booking for ${booking.serviceType} was canceled by ${canceledBy}. Reason: ${updateBookingDto.cancellationReason}`,
+            `Booking for ${booking.issueDescription} was canceled by ${canceledBy}. Reason: ${updateBookingDto.cancellationReason}`,
           );
           break;
       }

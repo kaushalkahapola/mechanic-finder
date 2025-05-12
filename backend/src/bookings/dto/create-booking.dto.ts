@@ -1,6 +1,16 @@
-import { IsString, IsNumber, IsDateString, IsEnum, Min, Max, ValidateNested, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsDateString,
+  Min,
+  Max,
+  ValidateNested,
+  IsOptional,
+  IsUUID,
+  IsArray,
+  ArrayMinSize,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { MechanicService } from '../../mechanics/entities/mechanic.entity';
 
 class LocationDto {
   @IsNumber()
@@ -14,6 +24,19 @@ class LocationDto {
   longitude: number;
 }
 
+class BookingServiceDto {
+  @IsUUID()
+  serviceTypeId: string;
+
+  @IsNumber()
+  @Min(1)
+  estimatedDuration: number;
+
+  @IsNumber()
+  @Min(0)
+  estimatedCost: number;
+}
+
 export class CreateBookingDto {
   @IsString()
   mechanicId: string;
@@ -25,18 +48,13 @@ export class CreateBookingDto {
   @IsDateString()
   scheduledTime: string;
 
-  @IsEnum(MechanicService)
-  serviceType: MechanicService;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @ArrayMinSize(1)
+  @Type(() => BookingServiceDto)
+  services: BookingServiceDto[];
 
   @IsString()
   @IsOptional()
   issueDescription?: string;
-
-  @IsNumber()
-  @Min(1)
-  estimatedDuration: number;
-
-  @IsNumber()
-  @Min(0)
-  estimatedCost: number;
-} 
+}

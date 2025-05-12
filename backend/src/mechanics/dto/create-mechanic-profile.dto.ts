@@ -1,25 +1,51 @@
-import { IsArray, IsBoolean, IsEnum, IsInt, IsNumber, Min, Max, ArrayMinSize } from 'class-validator';
-import { MechanicService } from '../entities/mechanic.entity';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  Min,
+  Max,
+  ArrayMinSize,
+  IsString,
+  IsUUID,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
+import { ServiceType } from '../../service-types/entities/service-type.entity';
+import { Type } from 'class-transformer';
+
+export class MechanicServiceDto {
+  @IsString()
+  serviceId: string;
+
+  @IsNumber()
+  @IsOptional()
+  customPrice?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isEmergencyAvailable?: boolean;
+}
 
 export class CreateMechanicProfileDto {
   @IsArray()
-  @ArrayMinSize(1)
-  @IsEnum(MechanicService, { each: true })
-  services: MechanicService[];
-
-  @IsBoolean()
-  availability: boolean;
-
-  @IsArray()
-  certifications?: string[];
-
-  @IsInt()
-  @Min(0)
-  @Max(50)
-  experienceYears: number;
+  @ValidateNested({ each: true })
+  @Type(() => MechanicServiceDto)
+  services: MechanicServiceDto[];
 
   @IsNumber()
-  @Min(1)
-  @Max(100)
-  serviceRadiusKm?: number = 10;
-} 
+  experienceYears: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  certifications: string[];
+
+  @IsNumber()
+  @IsOptional()
+  serviceRadiusKm?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  emergencyAvailable?: boolean;
+}
