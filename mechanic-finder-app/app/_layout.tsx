@@ -1,10 +1,12 @@
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
+import { SessionProvider } from "../ctx";
+import "./global.css";
 
-export default function RootLayout() {
+export default function Root() {
+  // Set up the auth context and render our layout inside of it.
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+    <SessionProvider>
+      <Slot />
+    </SessionProvider>
   );
 }
