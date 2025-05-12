@@ -13,8 +13,6 @@ import {
   fetchUser,
 } from "./services/authService";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
-
 const AuthContext = createContext<{
   signIn: (email: string, password: string) => void;
   signUp: (
