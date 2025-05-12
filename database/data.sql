@@ -46,3 +46,87 @@ VALUES
   60,
   NOW()
 );
+
+-- Insert Subscription Plans
+INSERT INTO SubscriptionPlans (
+    id,
+    name,
+    description,
+    price,
+    duration_months,
+    service_intervals,
+    features,
+    mechanic_revenue_share,
+    created_at
+)
+VALUES
+(
+    'sp-basic-001',
+    'Basic Maintenance Plan',
+    'Essential maintenance coverage including oil changes and basic inspections',
+    29.99,
+    1,
+    JSON_OBJECT(
+        'oil_change', 3,
+        'inspection', 6,
+        'tire_rotation', 6
+    ),
+    JSON_ARRAY(
+        'Monthly basic inspection',
+        'Quarterly oil change',
+        'Priority booking',
+        'Maintenance reminders'
+    ),
+    70.00,
+    NOW()
+),
+(
+    'sp-premium-001',
+    'Premium Maintenance Plan',
+    'Comprehensive maintenance coverage with priority service and additional benefits',
+    49.99,
+    1,
+    JSON_OBJECT(
+        'oil_change', 3,
+        'inspection', 3,
+        'tire_rotation', 4,
+        'brake_inspection', 6,
+        'battery_check', 6
+    ),
+    JSON_ARRAY(
+        'Monthly comprehensive inspection',
+        'Quarterly oil change',
+        'Bi-annual brake service',
+        'Priority emergency service',
+        '24/7 phone support',
+        'Maintenance reminders',
+        'Detailed service history tracking'
+    ),
+    75.00,
+    NOW()
+),
+(
+    'sp-annual-001',
+    'Annual Service Plan',
+    'Annual maintenance package with significant savings',
+    299.99,
+    12,
+    JSON_OBJECT(
+        'oil_change', 3,
+        'inspection', 3,
+        'tire_rotation', 4,
+        'brake_inspection', 6,
+        'battery_check', 6,
+        'full_inspection', 12
+    ),
+    JSON_ARRAY(
+        'All Premium Plan features',
+        'Annual full vehicle inspection',
+        'Free tire rotations',
+        'Discounted emergency services',
+        'Dedicated mechanic assignment',
+        'Vehicle health reports'
+    ),
+    80.00,
+    NOW()
+);

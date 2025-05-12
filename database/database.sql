@@ -253,6 +253,98 @@ CREATE TABLE ReviewAudit (
     FOREIGN KEY (review_id) REFERENCES Reviews(id)
 );
 
+-- Subscription Plans Table
+CREATE TABLE SubscriptionPlans (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    duration_months INT NOT NULL,
+    service_intervals JSON,  -- Stores service frequency settings
+    features JSON,  -- Stores included features/benefits
+    mechanic_revenue_share DECIMAL(5, 2) NOT NULL,  -- Percentage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- User Subscriptions Table
+CREATE TABLE UserSubscriptions (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    plan_id CHAR(36) NOT NULL,
+    mechanic_id CHAR(36) NOT NULL,
+    status ENUM('active', 'cancelled', 'expired') DEFAULT 'active',
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    auto_renew BOOLEAN DEFAULT TRUE,
+    last_payment_date TIMESTAMP,
+    next_payment_date TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id),
+    FOREIGN KEY (plan_id) REFERENCES SubscriptionPlans(id),
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
+);
+
+-- Vehicle Information Table
+CREATE TABLE Vehicles (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    make VARCHAR(100) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    year INT NOT NULL,
+    vin VARCHAR(17),
+    mileage INT,
+    last_service_date DATE,
+    next_service_date DATE,
+    service_history JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+
+-- Maintenance Schedule Table
+CREATE TABLE MaintenanceSchedules (
+    id CHAR(36) PRIMARY KEY,
+    subscription_id CHAR(36) NOT NULL,
+    vehicle_id CHAR(36) NOT NULL,
+    service_type_id CHAR(36) NOT NULL,
+    scheduled_date DATE NOT NULL,
+    status ENUM('pending', 'completed', 'skipped') DEFAULT 'pending',
+    completion_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id),
+    FOREIGN KEY (vehicle_id) REFERENCES Vehicles(id),
+    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id)
+);
+
+-- Subscription Transactions Table
+CREATE TABLE SubscriptionTransactions (
+    id CHAR(36) PRIMARY KEY,
+    subscription_id CHAR(36) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    mechanic_share DECIMAL(10, 2) NOT NULL,
+    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    transaction_date TIMESTAMP NOT NULL,
+    payment_method VARCHAR(50),
+    payment_reference VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id)
+);
+
+-- Subscription Audit Table
+CREATE TABLE SubscriptionAudit (
+    audit_id CHAR(36) PRIMARY KEY,
+    subscription_id CHAR(36) NOT NULL,
+    action ENUM('CREATE', 'UPDATE', 'CANCEL', 'RENEW') NOT NULL,
+    old_data JSON,
+    new_data JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id)
+);
+
 -- TRIGGERS
 DELIMITER //
 
@@ -294,6 +386,32 @@ BEGIN
     VALUES (UUID(), OLD.id, 'UPDATE',
             JSON_OBJECT('rating', OLD.rating, 'comment', OLD.comment),
             JSON_OBJECT('rating', NEW.rating, 'comment', NEW.comment));
+END//
+
+CREATE TRIGGER after_subscription_update
+AFTER UPDATE ON UserSubscriptions
+FOR EACH ROW
+BEGIN
+    INSERT INTO SubscriptionAudit (audit_id, subscription_id, action, old_data, new_data)
+    VALUES (
+        UUID(),
+        NEW.id,
+        CASE
+            WHEN NEW.status = 'cancelled' AND OLD.status = 'active' THEN 'CANCEL'
+            WHEN NEW.end_date > OLD.end_date THEN 'RENEW'
+            ELSE 'UPDATE'
+        END,
+        JSON_OBJECT(
+            'status', OLD.status,
+            'end_date', OLD.end_date,
+            'auto_renew', OLD.auto_renew
+        ),
+        JSON_OBJECT(
+            'status', NEW.status,
+            'end_date', NEW.end_date,
+            'auto_renew', NEW.auto_renew
+        )
+    );
 END//
 
 -- STORED PROCEDURES
