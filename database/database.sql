@@ -288,6 +288,7 @@ CREATE TABLE UserSubscriptions (
     FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
 );
 
+
 -- Vehicle Information Table
 CREATE TABLE Vehicles (
     id CHAR(36) PRIMARY KEY,
@@ -383,23 +384,6 @@ CREATE TABLE MaintenanceNotifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (maintenance_schedule_id) REFERENCES MaintenanceSchedules(id),
-    FOREIGN KEY (user_id) REFERENCES Users(id)
-);
-
--- Vehicle Information Table
-CREATE TABLE Vehicles (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
-    make VARCHAR(100) NOT NULL,
-    model VARCHAR(100) NOT NULL,
-    year INT NOT NULL,
-    vin VARCHAR(17),
-    mileage INT,
-    last_service_date DATE,
-    next_service_date DATE,
-    service_history JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 

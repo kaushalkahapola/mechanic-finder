@@ -1,3 +1,5 @@
+USE mechanic_finder;
+
 -- Insert Service Types
 INSERT INTO ServiceTypes (id, name, description, base_price, emergency_surcharge, estimated_duration, created_at)
 VALUES
