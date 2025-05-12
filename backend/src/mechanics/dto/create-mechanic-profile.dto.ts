@@ -9,29 +9,43 @@ import {
   ArrayMinSize,
   IsString,
   IsUUID,
+  IsOptional,
+  ValidateNested,
 } from 'class-validator';
 import { ServiceType } from '../../service-types/entities/service-type.entity';
+import { Type } from 'class-transformer';
+
+export class MechanicServiceDto {
+  @IsString()
+  serviceId: string;
+
+  @IsNumber()
+  @IsOptional()
+  customPrice?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isEmergencyAvailable?: boolean;
+}
 
 export class CreateMechanicProfileDto {
   @IsArray()
-  @IsUUID('4', { each: true })
-  services: string[];
+  @ValidateNested({ each: true })
+  @Type(() => MechanicServiceDto)
+  services: MechanicServiceDto[];
 
-  @IsBoolean()
-  availability: boolean;
+  @IsNumber()
+  experienceYears: number;
 
   @IsArray()
   @IsString({ each: true })
   certifications: string[];
 
   @IsNumber()
-  @Min(0)
-  experienceYears: number;
-
-  @IsNumber()
-  @Min(0)
-  serviceRadiusKm: number;
+  @IsOptional()
+  serviceRadiusKm?: number;
 
   @IsBoolean()
-  emergencyAvailable: boolean;
+  @IsOptional()
+  emergencyAvailable?: boolean;
 }

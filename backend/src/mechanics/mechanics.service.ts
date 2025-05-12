@@ -55,30 +55,28 @@ export class MechanicsService {
     }
 
     // Calculate distances using Haversine formula
-    if (useLocation && latitude !== 0 && longitude !== 0) {
-      query = query
-        .addSelect(
-          `(
-            6371 * acos(
-              cos(radians(:latitude)) * cos(radians(mechanic.currentLatitude)) *
-              cos(radians(mechanic.currentLongitude) - radians(:longitude)) +
-              sin(radians(:latitude)) * sin(radians(mechanic.currentLatitude))
-            )
-          )`,
-          'distance',
+    if (useLocation && latitude !== undefined && longitude !== undefined) {
+      const haversineFormula = `(
+        6371 * 
+        ACOS(
+          LEAST(1, 
+            COS(RADIANS(:latitude)) * 
+            COS(RADIANS(mechanic.currentLatitude)) * 
+            COS(RADIANS(mechanic.currentLongitude - :longitude)) + 
+            SIN(RADIANS(:latitude)) * 
+            SIN(RADIANS(mechanic.currentLatitude))
+          )
         )
+      )`;
+
+      query = query
+        .andWhere('mechanic.currentLatitude IS NOT NULL')
+        .andWhere('mechanic.currentLongitude IS NOT NULL')
+        .addSelect(haversineFormula, 'distance')
         .setParameter('latitude', latitude)
         .setParameter('longitude', longitude)
-        .andWhere(
-          `(
-            6371 * acos(
-              cos(radians(:latitude)) * cos(radians(mechanic.currentLatitude)) *
-              cos(radians(mechanic.currentLongitude) - radians(:longitude)) +
-              sin(radians(:latitude)) * sin(radians(mechanic.currentLatitude))
-            )
-          ) <= :radius`,
-          { radius },
-        )
+        .having(`distance <= :radius`)
+        .setParameter('radius', radius)
         .orderBy('distance', 'ASC');
     }
 
@@ -91,7 +89,7 @@ export class MechanicsService {
     const distances: Record<string, number> = {};
     if (useLocation && results.raw.length > 0) {
       results.raw.forEach((raw) => {
-        distances[raw.mechanic_id] = parseFloat(raw.distance);
+        distances[raw.mechanic_id] = parseFloat(raw.distance || 0);
       });
     }
 
@@ -133,11 +131,19 @@ export class MechanicsService {
       mechanic = this.mechanicRepository.create({
         id: uuidv4(),
         userId,
-        ...createMechanicProfileDto,
+        experienceYears: createMechanicProfileDto.experienceYears,
+        certifications: createMechanicProfileDto.certifications,
+        serviceRadiusKm: createMechanicProfileDto.serviceRadiusKm,
+        emergencyAvailable: createMechanicProfileDto.emergencyAvailable,
       });
       mechanic = await this.mechanicRepository.save(mechanic);
     } else {
-      Object.assign(mechanic, createMechanicProfileDto);
+      Object.assign(mechanic, {
+        experienceYears: createMechanicProfileDto.experienceYears,
+        certifications: createMechanicProfileDto.certifications,
+        serviceRadiusKm: createMechanicProfileDto.serviceRadiusKm,
+        emergencyAvailable: createMechanicProfileDto.emergencyAvailable,
+      });
       mechanic = await this.mechanicRepository.save(mechanic);
     }
 
@@ -150,13 +156,16 @@ export class MechanicsService {
 
       // Add new services
       const servicePromises = createMechanicProfileDto.services.map(
-        async (serviceId) => {
-          const serviceType = await this.serviceTypesService.findOne(serviceId);
+        async (serviceDto) => {
+          const serviceType = await this.serviceTypesService.findOne(
+            serviceDto.serviceId,
+          );
           const mechanicService = this.mechanicServiceRepository.create({
             mechanic: { id: mechanic.id },
             serviceType: { id: serviceType.id },
-            customPrice: undefined,
-            isEmergencyAvailable: mechanic.emergencyAvailable,
+            customPrice: serviceDto.customPrice,
+            isEmergencyAvailable:
+              serviceDto.isEmergencyAvailable ?? mechanic.emergencyAvailable,
           });
           return this.mechanicServiceRepository.save(mechanicService);
         },
