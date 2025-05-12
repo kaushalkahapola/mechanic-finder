@@ -25,4 +25,14 @@ export class AdminController {
   async findAllBookings(@Request() req): Promise<Booking[]> {
     return this.adminService.findAllBookings(req.user.sub);
   }
+
+  @Get('dashboard')
+  async getDashboardStats() {
+    return this.adminService.getDashboardStats();
+  }
+
+  @Get('booking-stats')
+  async getBookingStats() {
+    return this.adminService.getBookingStats();
+  }
 }
