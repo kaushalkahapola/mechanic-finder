@@ -38,9 +38,36 @@ CREATE TABLE Mechanics (
     current_longitude DECIMAL(11, 8),
     last_location_update TIMESTAMP,
     service_radius_km DECIMAL(5, 2) DEFAULT 10.00,  -- Default 10km radius
+    working_hours JSON,
+    is_online BOOLEAN DEFAULT FALSE,
+    last_online TIMESTAMP,
+    emergency_available BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
+-- Service Types Table
+CREATE TABLE ServiceTypes (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    base_price DECIMAL(10, 2),
+    emergency_surcharge DECIMAL(10, 2),
+    estimated_duration INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Mechanic Services Junction Table
+CREATE TABLE MechanicServices (
+    mechanic_id CHAR(36),
+    service_id CHAR(36),
+    custom_price DECIMAL(10, 2),
+    is_emergency_available BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (mechanic_id, service_id),
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    FOREIGN KEY (service_id) REFERENCES ServiceTypes(id)
+);
+
+-- Bookings Table
 CREATE TABLE Bookings (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
@@ -48,7 +75,6 @@ CREATE TABLE Bookings (
     service_location_latitude DECIMAL(10, 8) NOT NULL,
     service_location_longitude DECIMAL(11, 8) NOT NULL,
     scheduled_time DATETIME NOT NULL,
-    service_type VARCHAR(255) NOT NULL,
     issue_description TEXT,
     estimated_duration INT NOT NULL,
     actual_duration INT,
@@ -58,6 +84,10 @@ CREATE TABLE Bookings (
     payment_status ENUM('pending', 'paid', 'refunded') DEFAULT 'pending',
     cancellation_reason TEXT,
     completion_time DATETIME,
+    is_emergency BOOLEAN DEFAULT FALSE,
+    emergency_description TEXT,
+    response_time INT,
+    emergency_contact VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(id),
@@ -66,6 +96,19 @@ CREATE TABLE Bookings (
     INDEX idx_user_status (user_id, status),
     INDEX idx_mechanic_status (mechanic_id, status),
     INDEX idx_scheduled_time (scheduled_time)
+);
+
+-- Booking Services Junction Table
+CREATE TABLE BookingServices (
+    booking_id CHAR(36),
+    service_type_id CHAR(36),
+    estimated_duration INT NOT NULL,
+    estimated_cost DECIMAL(10, 2) NOT NULL,
+    actual_duration INT,
+    final_cost DECIMAL(10, 2),
+    PRIMARY KEY (booking_id, service_type_id),
+    FOREIGN KEY (booking_id) REFERENCES Bookings(id),
+    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id)
 );
 
 -- Reviews Table
@@ -91,7 +134,85 @@ CREATE TABLE Notifications (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
--- User Audit Table
+-- Mechanic Location History Table
+CREATE TABLE MechanicLocationHistory (
+    id CHAR(36) PRIMARY KEY,
+    mechanic_id CHAR(36) NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
+);
+
+-- Emergency Contacts Table
+CREATE TABLE EmergencyContacts (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(15) NOT NULL,
+    relationship VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+
+-- Transactions Table
+CREATE TABLE Transactions (
+    id CHAR(36) PRIMARY KEY,
+    booking_id CHAR(36) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    payment_method VARCHAR(50),
+    payment_reference VARCHAR(255),
+    refund_reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES Bookings(id)
+);
+
+-- Transaction History Table
+CREATE TABLE TransactionHistory (
+    id CHAR(36) PRIMARY KEY,
+    transaction_id CHAR(36) NOT NULL,
+    status ENUM('pending', 'completed', 'failed', 'refunded'),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (transaction_id) REFERENCES Transactions(id)
+);
+
+-- Service Statistics Table
+CREATE TABLE ServiceStatistics (
+    id CHAR(36) PRIMARY KEY,
+    mechanic_id CHAR(36),
+    service_type_id CHAR(36),
+    total_bookings INT DEFAULT 0,
+    completed_bookings INT DEFAULT 0,
+    canceled_bookings INT DEFAULT 0,
+    average_response_time INT,
+    average_rating DECIMAL(3,2),
+    total_revenue DECIMAL(10,2),
+    period_start DATE,
+    period_end DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id)
+);
+
+-- Area Statistics Table
+CREATE TABLE AreaStatistics (
+    id CHAR(36) PRIMARY KEY,
+    area_latitude DECIMAL(10, 8),
+    area_longitude DECIMAL(11, 8),
+    radius_km INT,
+    total_requests INT DEFAULT 0,
+    total_completed INT DEFAULT 0,
+    average_response_time INT,
+    peak_hours JSON,
+    period_start DATE,
+    period_end DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Audit Tables
 CREATE TABLE UserAudit (
     audit_id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
@@ -102,7 +223,6 @@ CREATE TABLE UserAudit (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
--- Mechanic Audit Table
 CREATE TABLE MechanicAudit (
     audit_id CHAR(36) PRIMARY KEY,
     mechanic_id CHAR(36) NOT NULL,
@@ -113,7 +233,6 @@ CREATE TABLE MechanicAudit (
     FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
 );
 
--- Booking Audit Table
 CREATE TABLE BookingAudit (
     audit_id CHAR(36) PRIMARY KEY,
     booking_id CHAR(36) NOT NULL,
@@ -124,7 +243,6 @@ CREATE TABLE BookingAudit (
     FOREIGN KEY (booking_id) REFERENCES Bookings(id)
 );
 
--- Review Audit Table
 CREATE TABLE ReviewAudit (
     audit_id CHAR(36) PRIMARY KEY,
     review_id CHAR(36) NOT NULL,
@@ -179,7 +297,6 @@ BEGIN
 END//
 
 -- STORED PROCEDURES
-
 CREATE PROCEDURE CreateBooking(
     IN p_user_id CHAR(36),
     IN p_mechanic_id CHAR(36),
@@ -202,7 +319,7 @@ END//
 
 DELIMITER ;
 
--- VIEW for available mechanics
+-- VIEWS
 CREATE VIEW AvailableMechanics AS
 SELECT
     m.id AS mechanic_id,
@@ -220,131 +337,3 @@ WHERE m.availability = TRUE;
 CREATE INDEX idx_user_email ON Users(email);
 CREATE INDEX idx_booking_user_id ON Bookings(user_id);
 CREATE INDEX idx_review_mechanic_id ON Reviews(mechanic_id);
-
--- new alters and tables (need to change)
--- Add to Mechanics table
-ALTER TABLE Mechanics ADD COLUMN working_hours JSON;
-ALTER TABLE Mechanics ADD COLUMN is_online BOOLEAN DEFAULT FALSE;
-ALTER TABLE Mechanics ADD COLUMN last_online TIMESTAMP;
-ALTER TABLE Mechanics ADD COLUMN emergency_available BOOLEAN DEFAULT FALSE;
-
--- Track location history
-CREATE TABLE MechanicLocationHistory (
-    id CHAR(36) PRIMARY KEY,
-    mechanic_id CHAR(36) NOT NULL,
-    latitude DECIMAL(10, 8) NOT NULL,
-    longitude DECIMAL(11, 8) NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id)
-);
-
-CREATE TABLE ServiceTypes (
-    id CHAR(36) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    base_price DECIMAL(10, 2),
-    emergency_surcharge DECIMAL(10, 2),
-    estimated_duration INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE MechanicServices (
-    mechanic_id CHAR(36),
-    service_id CHAR(36),
-    custom_price DECIMAL(10, 2),
-    is_emergency_available BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (mechanic_id, service_id),
-    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
-    FOREIGN KEY (service_id) REFERENCES ServiceTypes(id)
-);
-
-CREATE TABLE ServiceTypes (
-    id CHAR(36) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    base_price DECIMAL(10, 2),
-    emergency_surcharge DECIMAL(10, 2),
-    estimated_duration INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE MechanicServices (
-    mechanic_id CHAR(36),
-    service_id CHAR(36),
-    custom_price DECIMAL(10, 2),
-    is_emergency_available BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (mechanic_id, service_id),
-    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
-    FOREIGN KEY (service_id) REFERENCES ServiceTypes(id)
-);
-
--- Add to Bookings table
-ALTER TABLE Bookings 
-    ADD COLUMN is_emergency BOOLEAN DEFAULT FALSE,
-    ADD COLUMN emergency_description TEXT,
-    ADD COLUMN response_time INT,
-    ADD COLUMN emergency_contact VARCHAR(255);
-
--- Emergency Contact Information
-CREATE TABLE EmergencyContacts (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    phone VARCHAR(15) NOT NULL,
-    relationship VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(id)
-);
-
-CREATE TABLE Transactions (
-    id CHAR(36) PRIMARY KEY,
-    booking_id CHAR(36) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
-    payment_method VARCHAR(50),
-    payment_reference VARCHAR(255),
-    refund_reason TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (booking_id) REFERENCES Bookings(id)
-);
-
-CREATE TABLE TransactionHistory (
-    id CHAR(36) PRIMARY KEY,
-    transaction_id CHAR(36) NOT NULL,
-    status ENUM('pending', 'completed', 'failed', 'refunded'),
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (transaction_id) REFERENCES Transactions(id)
-);
-
-CREATE TABLE ServiceStatistics (
-    id CHAR(36) PRIMARY KEY,
-    mechanic_id CHAR(36),
-    service_type_id CHAR(36),
-    total_bookings INT DEFAULT 0,
-    completed_bookings INT DEFAULT 0,
-    canceled_bookings INT DEFAULT 0,
-    average_response_time INT,
-    average_rating DECIMAL(3,2),
-    total_revenue DECIMAL(10,2),
-    period_start DATE,
-    period_end DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
-    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id)
-);
-
-CREATE TABLE AreaStatistics (
-    id CHAR(36) PRIMARY KEY,
-    area_latitude DECIMAL(10, 8),
-    area_longitude DECIMAL(11, 8),
-    radius_km INT,
-    total_requests INT DEFAULT 0,
-    total_completed INT DEFAULT 0,
-    average_response_time INT,
-    peak_hours JSON,
-    period_start DATE,
-    period_end DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);

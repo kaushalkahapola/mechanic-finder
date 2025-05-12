@@ -45,11 +45,7 @@ export class MechanicsService {
       .leftJoinAndSelect('mechanic.user', 'user')
       .leftJoinAndSelect('mechanic.mechanicServices', 'mechanicServices')
       .leftJoinAndSelect('mechanicServices.serviceType', 'serviceType')
-      .where('mechanic.availability = :availability', { availability: true })
-      .andWhere('mechanic.is_online = :isOnline', { isOnline: true })
-      .andWhere('mechanic.last_location_update >= :minUpdateTime', {
-        minUpdateTime: new Date(Date.now() - 5 * 60 * 1000), // Last 5 minutes
-      });
+      .where('mechanic.availability = :availability', { availability: true });
 
     // Add service type filtering if provided
     if (serviceTypeId) {
