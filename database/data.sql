@@ -62,70 +62,118 @@ INSERT INTO SubscriptionPlans (
 VALUES
 (
     'sp-basic-001',
-    'Basic Maintenance Plan',
-    'Essential maintenance coverage including oil changes and basic inspections',
-    29.99,
+    'Basic Care Plan',
+    'Essential vehicle maintenance package for regular upkeep',
+    2999.00,  -- LKR 2,999 per month
     1,
     JSON_OBJECT(
-        'oil_change', 3,
-        'inspection', 6,
-        'tire_rotation', 6
+        'oil_change', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'basic_inspection', JSON_OBJECT(
+            'interval_months', 1,
+            'included_services', 12
+        ),
+        'tire_rotation', JSON_OBJECT(
+            'interval_months', 6,
+            'included_services', 2
+        )
     ),
     JSON_ARRAY(
         'Monthly basic inspection',
         'Quarterly oil change',
-        'Priority booking',
-        'Maintenance reminders'
+        'Semi-annual tire rotation',
+        'Basic maintenance reminders',
+        'Access to mechanic network',
+        'Flexible scheduling'
     ),
     70.00,
     NOW()
 ),
 (
     'sp-premium-001',
-    'Premium Maintenance Plan',
-    'Comprehensive maintenance coverage with priority service and additional benefits',
-    49.99,
+    'Premium Care Plan',
+    'Comprehensive maintenance package with priority service',
+    4999.00,  -- LKR 4,999 per month
     1,
     JSON_OBJECT(
-        'oil_change', 3,
-        'inspection', 3,
-        'tire_rotation', 4,
-        'brake_inspection', 6,
-        'battery_check', 6
+        'oil_change', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'full_inspection', JSON_OBJECT(
+            'interval_months', 1,
+            'included_services', 12
+        ),
+        'tire_service', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'brake_inspection', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'battery_check', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        )
     ),
     JSON_ARRAY(
-        'Monthly comprehensive inspection',
-        'Quarterly oil change',
-        'Bi-annual brake service',
-        'Priority emergency service',
-        '24/7 phone support',
-        'Maintenance reminders',
-        'Detailed service history tracking'
+        'All Basic Plan features',
+        'Priority scheduling',
+        'Quarterly brake inspection',
+        'Quarterly battery check',
+        '24/7 emergency support',
+        'Detailed service history',
+        'Advanced maintenance predictions',
+        'Preferred mechanic selection'
     ),
     75.00,
     NOW()
 ),
 (
     'sp-annual-001',
-    'Annual Service Plan',
-    'Annual maintenance package with significant savings',
-    299.99,
+    'Annual Protection Plan',
+    'Complete annual maintenance solution with maximum savings',
+    49999.00,  -- LKR 49,999 per year
     12,
     JSON_OBJECT(
-        'oil_change', 3,
-        'inspection', 3,
-        'tire_rotation', 4,
-        'brake_inspection', 6,
-        'battery_check', 6,
-        'full_inspection', 12
+        'oil_change', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'full_inspection', JSON_OBJECT(
+            'interval_months', 1,
+            'included_services', 12
+        ),
+        'tire_service', JSON_OBJECT(
+            'interval_months', 2,
+            'included_services', 6
+        ),
+        'brake_service', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'battery_service', JSON_OBJECT(
+            'interval_months', 3,
+            'included_services', 4
+        ),
+        'ac_service', JSON_OBJECT(
+            'interval_months', 6,
+            'included_services', 2
+        )
     ),
     JSON_ARRAY(
         'All Premium Plan features',
-        'Annual full vehicle inspection',
-        'Free tire rotations',
-        'Discounted emergency services',
-        'Dedicated mechanic assignment',
-        'Vehicle health reports'
+        'Annual deep inspection',
+        'Bi-monthly tire service',
+        'AC system maintenance',
+        'VIP emergency response',
+        'Dedicated mechanic team',
+        'Custom maintenance schedule',
+        'Full service history reports',
+        'Family vehicle coverage*'
     ),
     80.00,
     NOW()

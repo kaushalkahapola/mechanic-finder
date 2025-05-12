@@ -272,13 +272,15 @@ CREATE TABLE UserSubscriptions (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
     plan_id CHAR(36) NOT NULL,
-    mechanic_id CHAR(36) NOT NULL,
-    status ENUM('active', 'cancelled', 'expired') DEFAULT 'active',
+    mechanic_id CHAR(36),  -- Made nullable since mechanic assignment can be dynamic
+    status ENUM('pending', 'active', 'cancelled', 'expired') DEFAULT 'pending',
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     auto_renew BOOLEAN DEFAULT TRUE,
     last_payment_date TIMESTAMP,
     next_payment_date TIMESTAMP,
+    payhere_subscription_id VARCHAR(100),  -- Added for PayHere integration
+    payhere_customer_token VARCHAR(100),   -- Added for PayHere integration
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(id),
@@ -309,15 +311,22 @@ CREATE TABLE MaintenanceSchedules (
     subscription_id CHAR(36) NOT NULL,
     vehicle_id CHAR(36) NOT NULL,
     service_type_id CHAR(36) NOT NULL,
+    mechanic_id CHAR(36),  -- Added for dynamic mechanic assignment
     scheduled_date DATE NOT NULL,
-    status ENUM('pending', 'completed', 'skipped') DEFAULT 'pending',
+    preferred_time_slot VARCHAR(50),  -- Added for time slot preference
+    service_location_latitude DECIMAL(10, 8),  -- Added for location tracking
+    service_location_longitude DECIMAL(11, 8), -- Added for location tracking
+    status ENUM('pending', 'assigned', 'completed', 'cancelled', 'rescheduled') DEFAULT 'pending',
     completion_date DATE,
-    notes TEXT,
+    completion_notes TEXT,
+    rescheduled_from_id CHAR(36),  -- Added to track rescheduling history
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id),
     FOREIGN KEY (vehicle_id) REFERENCES Vehicles(id),
-    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id)
+    FOREIGN KEY (service_type_id) REFERENCES ServiceTypes(id),
+    FOREIGN KEY (mechanic_id) REFERENCES Mechanics(id),
+    FOREIGN KEY (rescheduled_from_id) REFERENCES MaintenanceSchedules(id)
 );
 
 -- Subscription Transactions Table
@@ -329,7 +338,9 @@ CREATE TABLE SubscriptionTransactions (
     status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
     transaction_date TIMESTAMP NOT NULL,
     payment_method VARCHAR(50),
-    payment_reference VARCHAR(255),
+    payhere_payment_id VARCHAR(100),    -- Added for PayHere integration
+    payhere_reference_id VARCHAR(100),  -- Added for PayHere integration
+    payhere_response JSON,              -- Added to store PayHere response data
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id)
 );
@@ -343,6 +354,53 @@ CREATE TABLE SubscriptionAudit (
     new_data JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id)
+);
+
+-- Add Maintenance Preferences Table
+CREATE TABLE MaintenancePreferences (
+    id CHAR(36) PRIMARY KEY,
+    subscription_id CHAR(36) NOT NULL,
+    preferred_days JSON,  -- Store array of preferred days (e.g., ["MONDAY", "WEDNESDAY"])
+    preferred_time_slots JSON,  -- Store array of preferred time slots
+    preferred_mechanic_id CHAR(36),
+    location_latitude DECIMAL(10, 8),
+    location_longitude DECIMAL(11, 8),
+    location_address TEXT,
+    notification_preferences JSON,  -- Store notification preferences
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES UserSubscriptions(id),
+    FOREIGN KEY (preferred_mechanic_id) REFERENCES Mechanics(id)
+);
+
+-- Add Maintenance Notifications Table
+CREATE TABLE MaintenanceNotifications (
+    id CHAR(36) PRIMARY KEY,
+    maintenance_schedule_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    type ENUM('reminder', 'upcoming', 'rescheduled', 'completed', 'cancelled') NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (maintenance_schedule_id) REFERENCES MaintenanceSchedules(id),
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+
+-- Vehicle Information Table
+CREATE TABLE Vehicles (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    make VARCHAR(100) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    year INT NOT NULL,
+    vin VARCHAR(17),
+    mileage INT,
+    last_service_date DATE,
+    next_service_date DATE,
+    service_history JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
 -- TRIGGERS
