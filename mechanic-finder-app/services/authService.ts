@@ -1,4 +1,4 @@
-import { BACKEND_URL } from "@env";
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
 export interface User {
   id: string;
