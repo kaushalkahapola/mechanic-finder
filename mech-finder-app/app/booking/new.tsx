@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Mechanic } from '@/mock/mechanicsData'; // Keep type
 import { Vehicle } from '@/mock/vehiclesData'; // Keep type
 import { Booking } from '@/mock/bookingsData'; // Keep type
@@ -43,9 +44,25 @@ export default function NewBookingScreen() {
     null
   );
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  // Date and Time State
+  const [date, setDate] = useState<Date>(new Date());
+  const [time, setTime] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // Formatted date and time strings for display and submission
   const [bookingDate, setBookingDate] = useState(''); // YYYY-MM-DD
   const [bookingTime, setBookingTime] = useState(''); // HH:MM AM/PM
+
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    // Initialize bookingDate and bookingTime when component mounts or date/time changes
+    // This ensures they are set even if the user doesn't interact with the pickers
+    // but relies on the default current date/time.
+    setBookingDate(formatDateToString(date));
+    setBookingTime(formatTimeToString(time));
+  }, [date, time]); // Update formatted strings if date/time objects change
 
   useEffect(() => {
     const foundMechanic = getMechanicById(mechanicId || ''); // Use context getter
@@ -61,7 +78,45 @@ export default function NewBookingScreen() {
       // ensure selectedVehicleId is not already set
       setSelectedVehicleId(userVehicles[0].id);
     }
-  }, [mechanicId, userVehicles, getMechanicById, selectedVehicleId]);
+  }, [mechanicId, userVehicles, getMechanicById, selectedVehicleId]); // Removed date, time from deps for this effect
+
+  const formatDateToString = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTimeToString = (t: Date): string => {
+    let hours = t.getHours();
+    const minutes = String(t.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+  };
+
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS until user dismisses
+    if (selectedDate) {
+      const currentDate = selectedDate || date;
+      setDate(currentDate);
+      setBookingDate(formatDateToString(currentDate));
+    }
+  };
+
+  const onTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      const currentTime = selectedTime || time;
+      // Preserve the date part from `date` state, only update time part
+      const newDateTime = new Date(date);
+      newDateTime.setHours(currentTime.getHours());
+      newDateTime.setMinutes(currentTime.getMinutes());
+      setTime(newDateTime); // Store the full Date object with updated time
+      setBookingTime(formatTimeToString(newDateTime));
+    }
+  };
 
   const handleCreateBooking = () => {
     if (
@@ -84,9 +139,27 @@ export default function NewBookingScreen() {
       return;
     }
 
-    contextAddBooking({
-      // Use context function
+    const newBookingData = {
       mechanicId: mechanic.id,
+      mechanicName: mechanic.name,
+      mechanicImage: mechanic.profileImage,
+      vehicleId: vehicle.id,
+      vehicleName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      service: selectedService,
+      date: bookingDate,
+      time: bookingTime,
+      status: 'scheduled', // Default status
+      price: mechanic.hourlyRate, // Placeholder price, could be estimated based on service
+      location: mechanic.address,
+      notes: notes,
+    };
+    console.log('[NewBookingScreen] Creating booking with data:', newBookingData);
+
+    contextAddBooking(newBookingData); // Use context function
+    // Note: The ID is generated within contextAddBooking, so we can't log it here directly
+    // unless contextAddBooking returns the new booking or its ID.
+
+    Alert.alert(
       mechanicName: mechanic.name,
       mechanicImage: mechanic.profileImage,
       vehicleId: vehicle.id,
@@ -286,7 +359,7 @@ export default function NewBookingScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.mechanicInfoContainer}>
+        <View style={[styles.mechanicInfoContainer, { borderBottomColor: isDark ? colors.gray[200] : colors.gray[100]}]}>
           <Text
             style={[
               typography.h4,
@@ -304,32 +377,48 @@ export default function NewBookingScreen() {
           {renderVehicleSelector()}
           {renderServiceSelector()}
 
-          <Input
-            label="Preferred Date (YYYY-MM-DD)"
-            placeholder="e.g., 2024-07-28"
-            value={bookingDate}
-            onChangeText={setBookingDate}
-            maxLength={10}
-            keyboardType="numeric" // Simple for now
-            containerStyle={styles.inputContainer}
-            leftIcon={
-              <Calendar
-                color={colors.gray[500]}
-                size={spacing.iconSize.medium}
-              />
-            }
-          />
-          <Input
-            label="Preferred Time (e.g., 10:00 AM)"
-            placeholder="e.g., 02:30 PM"
-            value={bookingTime}
-            onChangeText={setBookingTime}
-            maxLength={8}
-            containerStyle={styles.inputContainer}
-            leftIcon={
-              <Clock color={colors.gray[500]} size={spacing.iconSize.medium} />
-            }
-          />
+          {/* Date Picker Input */}
+          <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.inputContainer}>
+            <Input
+              label="Preferred Date"
+              value={bookingDate}
+              editable={false} // Make it not directly editable
+              placeholder="Select a date"
+              leftIcon={<Calendar color={colors.gray[500]} size={spacing.iconSize.medium} />}
+            />
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              testID="datePicker"
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onDateChange}
+              minimumDate={new Date()} // Optional: prevent past dates
+            />
+          )}
+
+          {/* Time Picker Input */}
+          <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.inputContainer}>
+            <Input
+              label="Preferred Time"
+              value={bookingTime}
+              editable={false} // Make it not directly editable
+              placeholder="Select a time"
+              leftIcon={<Clock color={colors.gray[500]} size={spacing.iconSize.medium} />}
+            />
+          </TouchableOpacity>
+          {showTimePicker && (
+            <DateTimePicker
+              testID="timePicker"
+              value={time} // Use 'time' state which is a Date object
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onTimeChange}
+              is24Hour={false} // Optional: use 12-hour format
+            />
+          )}
+
           <Input
             label="Notes for Mechanic (Optional)"
             placeholder="e.g., Specific issues, access instructions"
@@ -402,7 +491,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     borderBottomWidth: 1,
-    // borderBottomColor: '#eee', // Will be set in component style directly
+    // borderBottomColor set dynamically below
   },
   formContainer: {
     padding: 20,
