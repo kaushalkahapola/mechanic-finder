@@ -79,17 +79,27 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   // Booking Functions
   const addBooking = (bookingData: Omit<Booking, 'id'>) => {
     const newBooking: Booking = {
-      id: String(Date.now()),
+      id: String(Date.now()), // Consider a more robust ID generation for production
       ...bookingData,
     };
-    setBookings(prev => [...prev, newBooking]);
+    console.log('[DataContext] Adding booking:', newBooking);
+    setBookings(prev => {
+      const updatedBookings = [...prev, newBooking];
+      console.log('[DataContext] Bookings after add:', updatedBookings);
+      return updatedBookings;
+    });
   };
 
   const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
   };
 
-  const getBookingById = (bookingId: string) => bookings.find(b => b.id === bookingId);
+  const getBookingById = (bookingId: string) => {
+    console.log(`[DataContext] Attempting to get booking by ID: ${bookingId}`);
+    const booking = bookings.find(b => b.id === bookingId);
+    console.log('[DataContext] Booking found:', booking);
+    return booking;
+  };
 
   // User Functions
   const updateUser = (userData: Partial<User>) => {
