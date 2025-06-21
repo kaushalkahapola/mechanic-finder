@@ -12,7 +12,18 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Calendar, Clock, Car, Tool, MapPin, FileText, DollarSign, XCircle, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Car,
+  MapPin,
+  FileText,
+  DollarSign,
+  XCircle,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react-native';
 import { Booking, BookingStatus } from '@/mock/bookingsData'; // Keep type
 import { useData } from '@/context/DataContext'; // Import useData
 import { Button } from '@/components/ui/Button';
@@ -49,7 +60,7 @@ const getStatusStyle = (status: BookingStatus, colors: any) => {
       };
     default:
       return {
-        text: status.toUpperCase(),
+        text: (status as string).toUpperCase(),
         color: colors.gray[700],
         icon: <AlertTriangle color={colors.gray[700]} size={18} />,
         backgroundColor: colors.gray[200],
@@ -57,15 +68,17 @@ const getStatusStyle = (status: BookingStatus, colors: any) => {
   }
 };
 
-
 export default function BookingDetailScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getBookingById, updateBookingStatus: contextUpdateBookingStatus } = useData(); // Get context functions
+  const { getBookingById, updateBookingStatus: contextUpdateBookingStatus } =
+    useData(); // Get context functions
 
   // Use a local state for booking to reflect immediate UI changes upon cancellation,
   // while the source of truth is updated via context.
-  const [booking, setBooking] = useState<Booking | undefined>(() => getBookingById(id || ''));
+  const [booking, setBooking] = useState<Booking | undefined>(() =>
+    getBookingById(id || '')
+  );
 
   useEffect(() => {
     // This effect ensures that if the booking data changes in the context
@@ -73,10 +86,9 @@ export default function BookingDetailScreen() {
     // the local view is updated. For cancellation, we update local state first for responsiveness.
     const freshBooking = getBookingById(id || '');
     if (JSON.stringify(freshBooking) !== JSON.stringify(booking)) {
-        setBooking(freshBooking);
+      setBooking(freshBooking);
     }
   }, [id, getBookingById, booking]);
-
 
   const handleCancelBooking = () => {
     if (!booking || !id) return;
@@ -91,10 +103,14 @@ export default function BookingDetailScreen() {
           onPress: () => {
             contextUpdateBookingStatus(id, 'cancelled'); // Use context function
             // Update local state immediately for UI responsiveness
-            setBooking(prev => prev ? { ...prev, status: 'cancelled' } : undefined);
-            Alert.alert('Booking Cancelled', `Your booking for ${booking.service} has been cancelled.`, [
-              { text: 'OK', onPress: () => router.back() },
-            ]);
+            setBooking((prev) =>
+              prev ? { ...prev, status: 'cancelled' } : undefined
+            );
+            Alert.alert(
+              'Booking Cancelled',
+              `Your booking for ${booking.service} has been cancelled.`,
+              [{ text: 'OK', onPress: () => router.back() }]
+            );
           },
         },
       ],
@@ -104,12 +120,33 @@ export default function BookingDetailScreen() {
 
   if (!booking) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.white, justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDark ? colors.gray[50] : colors.white,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        ]}
+      >
         <StatusBar style={isDark ? 'light' : 'dark'} />
-        <Text style={[typography.h3, { color: isDark ? colors.white : colors.gray[900], textAlign: 'center', marginBottom: spacing.md }]}>
+        <Text
+          style={[
+            typography.h3,
+            {
+              color: isDark ? colors.white : colors.gray[900],
+              textAlign: 'center',
+              marginBottom: spacing.md,
+            },
+          ]}
+        >
           Booking Not Found
         </Text>
-        <Button title="Go to My Bookings" onPress={() => router.replace('/(tabs)/bookings')} />
+        <Button
+          title="Go to My Bookings"
+          onPress={() => router.replace('/(tabs)/bookings')}
+        />
       </SafeAreaView>
     );
   }
@@ -117,61 +154,182 @@ export default function BookingDetailScreen() {
   const statusStyle = getStatusStyle(booking.status, colors);
 
   const detailItems = [
-    { icon: Tool, label: 'Service', value: booking.service },
+    { icon: Car, label: 'Service', value: booking.service },
     { icon: Car, label: 'Vehicle', value: booking.vehicleName },
     { icon: MapPin, label: 'Location', value: booking.location },
     { icon: DollarSign, label: 'Price', value: `$${booking.price.toFixed(2)}` },
-    { icon: FileText, label: 'Notes', value: booking.notes || 'No notes provided.' },
+    {
+      icon: FileText,
+      label: 'Notes',
+      value: booking.notes || 'No notes provided.',
+    },
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.white }]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.white },
+      ]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      <View style={[styles.header, { backgroundColor: isDark ? colors.gray[100] : colors.primary[500], borderBottomColor: isDark ? colors.gray[200] : colors.primary[600] }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft color={isDark ? colors.primary[500] : colors.white} size={spacing.iconSize.large} />
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: isDark ? colors.gray[100] : colors.primary[500],
+            borderBottomColor: isDark ? colors.gray[200] : colors.primary[600],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <ArrowLeft
+            color={isDark ? colors.primary[500] : colors.white}
+            size={spacing.iconSize.large}
+          />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, typography.h3, { color: isDark ? colors.primary[500] : colors.white }]}>
+        <Text
+          style={[
+            styles.headerTitle,
+            typography.h3,
+            { color: isDark ? colors.primary[500] : colors.white },
+          ]}
+        >
           Booking Details
         </Text>
         <View style={{ width: spacing.iconSize.large }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.card, { backgroundColor: isDark ? colors.gray[100] : colors.white }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: isDark ? colors.gray[100] : colors.white },
+          ]}
+        >
           <View style={styles.mechanicSection}>
-            <Image source={{ uri: booking.mechanicImage || `https://picsum.photos/seed/${booking.mechanicId}/100/100` }} style={styles.mechanicImage} />
+            <Image
+              source={{
+                uri:
+                  booking.mechanicImage ||
+                  `https://picsum.photos/seed/${booking.mechanicId}/100/100`,
+              }}
+              style={styles.mechanicImage}
+            />
             <View>
-              <Text style={[typography.h4, { color: isDark ? colors.white : colors.gray[900] }]}>{booking.mechanicName}</Text>
-              <Text style={[typography.subtitle1, { color: colors.gray[500] }]}>Mechanic</Text>
+              <Text
+                style={[
+                  typography.h4,
+                  { color: isDark ? colors.white : colors.gray[900] },
+                ]}
+              >
+                {booking.mechanicName}
+              </Text>
+              <Text style={[typography.subtitle1, { color: colors.gray[500] }]}>
+                Mechanic
+              </Text>
             </View>
           </View>
 
           <View style={styles.dateTimeSection}>
             <View style={styles.dateTimeItem}>
-              <Calendar color={colors.primary[500]} size={spacing.iconSize.medium} />
-              <Text style={[typography.body1, { marginLeft: spacing.sm, color: isDark ? colors.white : colors.gray[800] }]}>{booking.date}</Text>
+              <Calendar
+                color={colors.primary[500]}
+                size={spacing.iconSize.medium}
+              />
+              <Text
+                style={[
+                  typography.body1,
+                  {
+                    marginLeft: spacing.sm,
+                    color: isDark ? colors.white : colors.gray[800],
+                  },
+                ]}
+              >
+                {booking.date}
+              </Text>
             </View>
             <View style={styles.dateTimeItem}>
-              <Clock color={colors.primary[500]} size={spacing.iconSize.medium} />
-              <Text style={[typography.body1, { marginLeft: spacing.sm, color: isDark ? colors.white : colors.gray[800] }]}>{booking.time}</Text>
+              <Clock
+                color={colors.primary[500]}
+                size={spacing.iconSize.medium}
+              />
+              <Text
+                style={[
+                  typography.body1,
+                  {
+                    marginLeft: spacing.sm,
+                    color: isDark ? colors.white : colors.gray[800],
+                  },
+                ]}
+              >
+                {booking.time}
+              </Text>
             </View>
           </View>
 
-          <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: statusStyle.backgroundColor },
+            ]}
+          >
             {statusStyle.icon}
-            <Text style={[typography.button, { color: statusStyle.color, marginLeft: spacing.xs }]}>{statusStyle.text}</Text>
+            <Text
+              style={[
+                typography.button,
+                { color: statusStyle.color, marginLeft: spacing.xs },
+              ]}
+            >
+              {statusStyle.text}
+            </Text>
           </View>
         </View>
 
-        <View style={[styles.detailsContainer, { backgroundColor: isDark ? colors.gray[100] : colors.white }]}>
+        <View
+          style={[
+            styles.detailsContainer,
+            { backgroundColor: isDark ? colors.gray[100] : colors.white },
+          ]}
+        >
           {detailItems.map((item, index) => (
-            <View key={index} style={[styles.detailItem, { borderBottomColor: isDark ? colors.gray[200] : colors.gray[50] }]}>
-              <item.icon color={colors.gray[500]} size={spacing.iconSize.medium} style={styles.detailIcon} />
+            <View
+              key={index}
+              style={[
+                styles.detailItem,
+                {
+                  borderBottomColor: isDark
+                    ? colors.gray[200]
+                    : colors.gray[50],
+                },
+              ]}
+            >
+              <item.icon
+                color={colors.gray[500]}
+                size={spacing.iconSize.medium}
+                style={styles.detailIcon}
+              />
               <View style={styles.detailTextContainer}>
-                <Text style={[typography.caption, { color: isDark ? colors.gray[600] : colors.gray[500] }]}>{item.label}</Text>
-                <Text style={[typography.body1, { color: isDark ? colors.white : colors.gray[900] }]}>{item.value}</Text>
+                <Text
+                  style={[
+                    typography.caption,
+                    { color: isDark ? colors.gray[600] : colors.gray[500] },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+                <Text
+                  style={[
+                    typography.body1,
+                    { color: isDark ? colors.white : colors.gray[900] },
+                  ]}
+                >
+                  {item.value}
+                </Text>
               </View>
             </View>
           ))}
@@ -179,13 +337,23 @@ export default function BookingDetailScreen() {
       </ScrollView>
 
       {booking.status === 'scheduled' && (
-      <View style={[styles.footer, { backgroundColor: isDark ? colors.gray[100] : colors.white, borderTopColor: isDark ? colors.gray[200] : colors.gray[100] }]}>
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: isDark ? colors.gray[100] : colors.white,
+              borderTopColor: isDark ? colors.gray[200] : colors.gray[100],
+            },
+          ]}
+        >
           <Button
             title="Cancel Booking"
             onPress={handleCancelBooking}
             variant="danger"
             fullWidth
-            leftIcon={<XCircle color={colors.white} size={spacing.iconSize.medium} />}
+            leftIcon={
+              <XCircle color={colors.white} size={spacing.iconSize.medium} />
+            }
           />
         </View>
       )}
