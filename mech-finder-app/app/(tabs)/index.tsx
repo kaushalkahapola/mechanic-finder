@@ -16,7 +16,8 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { router } from 'expo-router';
 import { Search, MapPin, X, List } from 'lucide-react-native';
 import { MechanicCard } from '@/components/mechanic/MechanicCard';
-import { Mechanic, mechanicsData } from '@/mock/mechanicsData';
+import { Mechanic } from '@/mock/mechanicsData'; // Keep type
+import { useData } from '@/context/DataContext'; // Import useData
 import MapView, { Marker } from 'react-native-maps';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { useBottomSheet } from '@gorhom/bottom-sheet';
@@ -31,6 +32,7 @@ const INITIAL_REGION = {
 
 export default function HomeScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
+  const { mechanics: mechanicsDataFromContext } = useData(); // Get mechanics from context
   const [searchQuery, setSearchQuery] = useState('');
   const [showList, setShowList] = useState(true);
   const bottomSheetAnimation = useRef(new Animated.Value(0)).current;
@@ -66,7 +68,7 @@ export default function HomeScreen() {
     outputRange: [80, 300],
   });
 
-  const filteredMechanics = mechanicsData.filter(
+  const filteredMechanics = mechanicsDataFromContext.filter( // Use mechanics from context
     (mechanic) =>
       mechanic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       mechanic.services.some((service) =>
@@ -209,10 +211,10 @@ export default function HomeScreen() {
             Nearby Mechanics
           </Text>
           <FlatList
-            data={filteredMechanics}
+            data={filteredMechanics} // Already using filtered from context data
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <MechanicCard mechanic={item} onPress={handleMechanicPress} />
+              <MechanicCard mechanic={item} onPress={() => handleMechanicPress(item)} />
             )}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.mechanicsList}

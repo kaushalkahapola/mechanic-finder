@@ -11,41 +11,46 @@ import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/theme/ThemeProvider';
 import { router } from 'expo-router';
 import { BookingCard } from '@/components/booking/BookingCard';
-import { Booking, bookingsData } from '@/mock/bookingsData';
+import { Booking } from '@/mock/bookingsData'; // Keep type
+import { useData } from '@/context/DataContext'; // Import useData
 
 type FilterType = 'all' | 'upcoming' | 'past';
 
 export default function BookingsScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
+  const { bookings: contextBookings } = useData(); // Get bookings from context
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const handleBookingPress = (booking: Booking) => {
     router.push({
-      pathname: '/booking/[id]',
+      pathname: `/booking/${booking.id}`, // Corrected path
       params: { id: booking.id }
     });
   };
 
   const filterBookings = () => {
     const today = new Date();
+    // Ensure date comparisons are valid, e.g., by parsing booking.date
+    // For simplicity, assuming date strings are directly comparable or already Date objects
+    // If dates are strings like 'YYYY-MM-DD', new Date(booking.date) is fine.
     
     switch (activeFilter) {
       case 'upcoming':
-        return bookingsData.filter(
+        return contextBookings.filter( // Use contextBookings
           (booking) => 
             new Date(booking.date) >= today && 
             booking.status !== 'cancelled' && 
             booking.status !== 'completed'
         );
       case 'past':
-        return bookingsData.filter(
+        return contextBookings.filter( // Use contextBookings
           (booking) => 
             new Date(booking.date) < today || 
             booking.status === 'cancelled' || 
             booking.status === 'completed'
         );
       default:
-        return bookingsData;
+        return contextBookings; // Use contextBookings
     }
   };
 

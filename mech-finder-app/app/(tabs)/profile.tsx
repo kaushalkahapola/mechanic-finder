@@ -15,10 +15,12 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { router } from 'expo-router';
 import { User, Mail, Phone, Settings, Bell, Moon, LogOut, ChevronRight, Key, ShieldCheck, CircleHelp as HelpCircle, FileText } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useData } from '@/context/DataContext'; // Import useData
 
 export default function ProfileScreen() {
   const { colors, spacing, typography, isDark, setTheme, theme } = useTheme();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const { user } = useData(); // Get user from context
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // Keep as local UI state
 
   const handleDarkModeToggle = () => {
     setTheme(isDark ? 'light' : 'dark');
@@ -31,6 +33,10 @@ export default function ProfileScreen() {
   const handleEditProfile = () => {
     router.push('/profile/edit');
   };
+
+  const navigateToStaticPage = (path: string) => {
+    router.push(path);
+  }
 
   const handleLogout = async () => {
     Alert.alert(
@@ -72,7 +78,7 @@ export default function ProfileScreen() {
             ]}
           >
             <Image
-              source={{ uri: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }}
+              source={{ uri: user.profileImage || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }} // Use user.profileImage
               style={styles.profileImage}
             />
             <Text
@@ -82,7 +88,7 @@ export default function ProfileScreen() {
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
             >
-              John Doe
+              {user.name} {/* Use user.name */}
             </Text>
             <TouchableOpacity
               style={[
@@ -127,7 +133,7 @@ export default function ProfileScreen() {
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
             >
-              John Doe
+              {user.name} {/* Use user.name */}
             </Text>
           </View>
 
@@ -149,7 +155,7 @@ export default function ProfileScreen() {
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
             >
-              john.doe@example.com
+              {user.email} {/* Use user.email */}
             </Text>
           </View>
 
@@ -171,7 +177,7 @@ export default function ProfileScreen() {
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
             >
-              (555) 123-4567
+              {user.phone} {/* Use user.phone */}
             </Text>
           </View>
         </View>
@@ -237,7 +243,7 @@ export default function ProfileScreen() {
             { backgroundColor: isDark ? colors.gray[100] : colors.white },
           ]}
         >
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert("Feature not implemented", "Changing password is not yet available.")}>
             <View style={styles.menuIconContainer}>
               <Key color={colors.primary[500]} size={spacing.iconSize.medium} />
             </View>
@@ -253,7 +259,7 @@ export default function ProfileScreen() {
             <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigateToStaticPage('/profile/privacy')}>
             <View style={styles.menuIconContainer}>
               <ShieldCheck color={colors.primary[500]} size={spacing.iconSize.medium} />
             </View>
@@ -264,12 +270,12 @@ export default function ProfileScreen() {
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
             >
-              Privacy & Security
+              Privacy Policy
             </Text>
             <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigateToStaticPage('/profile/help')}>
             <View style={styles.menuIconContainer}>
               <HelpCircle color={colors.primary[500]} size={spacing.iconSize.medium} />
             </View>
@@ -285,7 +291,7 @@ export default function ProfileScreen() {
             <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigateToStaticPage('/profile/terms')}>
             <View style={styles.menuIconContainer}>
               <FileText color={colors.primary[500]} size={spacing.iconSize.medium} />
             </View>
