@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,164 +7,117 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Animated,
   Dimensions,
   Platform,
+  Animated,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/theme/ThemeProvider';
 import { router } from 'expo-router';
-import { Search, MapPin, X, List } from 'lucide-react-native';
+import { Search, MapPin, X, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { MechanicCard } from '@/components/mechanic/MechanicCard';
-import { Mechanic } from '@/mock/mechanicsData'; // Keep type
-import { useData } from '@/context/DataContext'; // Import useData
-import MapView, { Marker } from 'react-native-maps';
+import { Mechanic } from '@/mock/mechanicsData';
+import { useData } from '@/context/DataContext';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import BottomSheet, { useBottomSheet } from '@gorhom/bottom-sheet';
 
-const { width } = Dimensions.get('window');
-const INITIAL_REGION = {
-  latitude: 37.7749,
-  longitude: -122.4194,
-  latitudeDelta: 0.0922,
-  longitudeDelta: 0.0421,
+const { width, height } = Dimensions.get('window');
+
+const COLOMBO_REGION = {
+  latitude: 6.9271,
+  longitude: 79.8612,
+  latitudeDelta: 0.05,
+  longitudeDelta: 0.05,
 };
 
 export default function HomeScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
-  const { mechanics: mechanicsDataFromContext } = useData(); // Get mechanics from context
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showList, setShowList] = useState(true);
-  const bottomSheetAnimation = useRef(new Animated.Value(0)).current;
-  const mapRef = useRef<MapView>(null);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const { mechanics: mechanicsDataFromContext } = useData();
 
-  const handleMechanicPress = (mechanic: Mechanic) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('list'); // 'list' or 'map'
+  const [selectedMechanic, setSelectedMechanic] = useState<Mechanic | null>(
+    null
+  );
+  const mapRef = useRef<MapView>(null);
+  const animation = useRef(new Animated.Value(1)).current;
+
+  const filteredMechanics = useMemo(() => {
+    return mechanicsDataFromContext.filter(
+      (mechanic) =>
+        mechanic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mechanic.services.some((service) =>
+          service.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    );
+  }, [searchQuery, mechanicsDataFromContext]);
+
+  const handleMechanicPress = useCallback((mechanic: Mechanic) => {
     router.push({
       pathname: '/mechanic/[id]',
       params: { id: mechanic.id },
     });
-  };
+  }, []);
 
   const handleMarkerPress = (mechanic: Mechanic) => {
+    setSelectedMechanic(mechanic);
     if (Platform.OS !== 'web' && mapRef.current) {
       mapRef.current.animateToRegion({
         latitude: mechanic.latitude,
         longitude: mechanic.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+        latitudeDelta: 0.005, // Zoom in a bit more
+        longitudeDelta: 0.005,
       });
     }
   };
 
-  const toggleListView = () => {
-    const isOpen = showList;
-    bottomSheetRef.current?.snapToIndex(isOpen ? 0 : 1);
-    setShowList(!isOpen);
-  };
+  // Removed toggleView function and expand button usage
 
-  const listHeight = bottomSheetAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [80, 300],
-  });
-
-  const filteredMechanics = mechanicsDataFromContext.filter( // Use mechanics from context
-    (mechanic) =>
-      mechanic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mechanic.services.some((service) =>
-        service.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  );
-
-  const renderMap = () => {
-    if (Platform.OS === 'web' || !MapView) {
-      return (
-        <View
-          style={[
-            styles.webMapPlaceholder,
-            { backgroundColor: colors.gray[200] },
-          ]}
-        >
-          <Text style={[typography.body1, { color: colors.gray[600] }]}>
-            Map view is only available in the mobile app
-          </Text>
-          <TouchableOpacity
-            style={[
-              styles.getAppButton,
-              { backgroundColor: colors.primary[500] },
-            ]}
-            onPress={() => {
-              // Handle app download or show QR code
-            }}
-          >
-            <Text style={[typography.button, { color: colors.white }]}>
-              Get the mobile app
-            </Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return (
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider="google"
-        initialRegion={INITIAL_REGION}
-      >
-        {filteredMechanics.map((mechanic) => (
-          <Marker
-            key={mechanic.id}
-            coordinate={{
-              latitude: mechanic.latitude,
-              longitude: mechanic.longitude,
-            }}
-            onPress={() => handleMarkerPress(mechanic)}
-          >
-            <View
-              style={[
-                styles.markerContainer,
-                { backgroundColor: colors.primary[500] },
-              ]}
-            >
-              <MapPin color={colors.white} size={spacing.iconSize.small} />
-            </View>
-          </Marker>
-        ))}
-      </MapView>
-    );
-  };
+  const listHeight = height * 0.6;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] },
+          { backgroundColor: isDark ? colors.gray[900] : colors.gray[50] },
         ]}
       >
         <StatusBar style={isDark ? 'light' : 'dark'} />
 
-        <View style={styles.searchContainer}>
+        {/* Header */}
+        {/* Search Bar and Tab Toggle */}
+        <View
+          style={[
+            styles.searchAndToggleContainer,
+            {
+              backgroundColor: isDark ? colors.gray[900] : colors.gray[50],
+            },
+          ]}
+        >
           <View
             style={[
-              styles.searchBar,
+              styles.searchBarContainer,
               {
-                backgroundColor: isDark ? colors.gray[100] : colors.white,
-                borderColor: isDark ? colors.gray[300] : colors.gray[300],
+                backgroundColor: isDark ? colors.gray[800] : colors.white,
+                shadowColor: colors.gray[500],
               },
             ]}
           >
-            <Search color={colors.gray[500]} size={spacing.iconSize.medium} />
+            <Search
+              color={colors.gray[500]}
+              size={spacing.iconSize.medium}
+              style={styles.searchIcon}
+            />
             <TextInput
               style={[
                 styles.searchInput,
                 typography.body1,
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
-              placeholder="Search mechanics, services..."
+              placeholder="Search mechanics or services..."
               placeholderTextColor={
-                isDark ? colors.gray[600] : colors.gray[500]
+                isDark ? colors.gray[400] : colors.gray[600]
               }
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -175,51 +128,187 @@ export default function HomeScreen() {
               </TouchableOpacity>
             )}
           </View>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === 'list' && {
+                  backgroundColor: colors.primary[600],
+                },
+              ]}
+              onPress={() => setActiveTab('list')}
+            >
+              <Text
+                style={[
+                  typography.button,
+                  {
+                    color:
+                      activeTab === 'list' ? colors.white : colors.gray[600],
+                  },
+                ]}
+              >
+                List
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === 'map' && {
+                  backgroundColor: colors.primary[600],
+                },
+              ]}
+              onPress={() => setActiveTab('map')}
+            >
+              <Text
+                style={[
+                  typography.button,
+                  {
+                    color:
+                      activeTab === 'map' ? colors.white : colors.gray[600],
+                  },
+                ]}
+              >
+                Map
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.mapContainer}>
-          {renderMap()}
-          <TouchableOpacity
+        {/* Main Content */}
+        {activeTab === 'map' ? (
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            initialRegion={COLOMBO_REGION}
+            customMapStyle={isDark ? darkMapStyle : lightMapStyle}
+          >
+            {filteredMechanics.map((mechanic) => (
+              <Marker
+                key={mechanic.id}
+                coordinate={{
+                  latitude: mechanic.latitude,
+                  longitude: mechanic.longitude,
+                }}
+                onPress={() => handleMarkerPress(mechanic)}
+              >
+                <View
+                  style={[
+                    styles.markerContainer,
+                    { backgroundColor: colors.primary[500] },
+                  ]}
+                >
+                  <MapPin color={colors.white} size={spacing.iconSize.medium} />
+                  {/* <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={{
+                      color: colors.white,
+                      marginLeft: 8,
+                      fontWeight: 'bold',
+                      fontSize: 14, // Larger font size
+                      textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                      textShadowOffset: { width: 0, height: 0 },
+                      textShadowRadius: 2,
+                      width: 150, // Increased max width
+                    }}
+                  >
+                    {mechanic.name}
+                  </Text> */}
+                </View>
+              </Marker>
+            ))}
+          </MapView>
+        ) : null}
+
+        {activeTab === 'list' && (
+          <Animated.View
             style={[
-              styles.viewToggle,
+              styles.listContainer,
               {
-                backgroundColor: isDark
-                  ? colors.primary[600]
-                  : colors.primary[500],
+                backgroundColor: isDark ? colors.gray[800] : colors.white,
+                height: listHeight,
               },
             ]}
-            onPress={toggleListView}
           >
-            <List color={colors.white} size={spacing.iconSize.medium} />
-          </TouchableOpacity>
-        </View>
+            <Text
+              style={[
+                typography.h5,
+                styles.listTitle,
+                { color: isDark ? colors.white : colors.gray[900] },
+              ]}
+            >
+              {filteredMechanics.length} Mechanics Nearby
+            </Text>
+            <FlatList
+              data={filteredMechanics}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <MechanicCard
+                  mechanic={item}
+                  onPress={() => handleMechanicPress(item)}
+                />
+              )}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+            />
+          </Animated.View>
+        )}
 
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={0}
-          snapPoints={[80, 300]}
-          onChange={(index) => setShowList(index === 1)}
-        >
-          <View style={styles.bottomSheetHandle} />
-          <Text
+        {selectedMechanic && activeTab === 'map' && (
+          <Animated.View
             style={[
-              styles.bottomSheetTitle,
-              typography.h4,
-              { color: isDark ? colors.white : colors.gray[900] },
+              styles.mechanicDetailPanel,
+              {
+                backgroundColor: isDark ? colors.gray[800] : colors.white,
+                shadowColor: colors.gray[500],
+              },
             ]}
           >
-            Nearby Mechanics
-          </Text>
-          <FlatList
-            data={filteredMechanics} // Already using filtered from context data
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <MechanicCard mechanic={item} onPress={() => handleMechanicPress(item)} />
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.mechanicsList}
-          />
-        </BottomSheet>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedMechanic(null)}
+            >
+              <X color={colors.gray[500]} size={spacing.iconSize.medium} />
+            </TouchableOpacity>
+            <Text
+              style={[
+                typography.h5,
+                { color: isDark ? colors.white : colors.gray[900] },
+              ]}
+            >
+              {selectedMechanic.name}
+            </Text>
+            <Text
+              style={[
+                typography.body2,
+                { color: isDark ? colors.gray[300] : colors.gray[700] },
+              ]}
+            >
+              {selectedMechanic.address}
+            </Text>
+            <Text
+              style={[
+                typography.body2,
+                { color: isDark ? colors.gray[300] : colors.gray[700] },
+              ]}
+            >
+              Rating: {selectedMechanic.rating} ({selectedMechanic.reviewCount}{' '}
+              reviews)
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.viewMoreButton,
+                { backgroundColor: colors.primary[600] },
+              ]}
+              onPress={() => handleMechanicPress(selectedMechanic)}
+            >
+              <Text style={[typography.button, { color: colors.white }]}>
+                View More Details
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -229,44 +318,92 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    zIndex: 1,
+  searchAndToggleContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 12,
+    alignItems: 'center',
   },
-  searchBar: {
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 12,
+    padding: 4,
+    marginTop: 12, // Add some space between search and toggle
+  },
+  tabButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+    paddingVertical: 8, // Reduced vertical padding
+    borderRadius: 16,
+    width: '100%', // Make it full width within its container
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
     marginRight: 8,
-  },
-  mapContainer: {
-    flex: 1,
+    height: 40,
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    marginBottom: 8,
   },
-  webMapPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
+  marker: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
-  getAppButton: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+  listContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  mechanicDetailPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 8,
   },
   markerContainer: {
-    padding: 8,
+    padding: 1,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -276,45 +413,157 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  viewToggle: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    padding: 12,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+  viewMoreButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
   },
-  bottomSheet: {
-    width: '100%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
+  listTitle: {
+    paddingHorizontal: 24,
+    paddingBottom: 12,
+  },
+  listContent: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    position: 'absolute',
-    bottom: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  bottomSheetHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#ccc',
-    borderRadius: 3,
-    alignSelf: 'center',
-    marginBottom: 8,
-  },
-  bottomSheetTitle: {
-    marginBottom: 16,
-  },
-  mechanicsList: {
     paddingBottom: 24,
   },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  navItem: {
+    alignItems: 'center',
+    padding: 8,
+  },
 });
+
+const darkMapStyle = [
+  {
+    elementType: 'geometry',
+    stylers: [{ color: '#242f3e' }],
+  },
+  {
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#746855' }],
+  },
+  {
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#242f3e' }],
+  },
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }],
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#263c3f' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#38414e' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#212a37' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#746855' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1f2835' }],
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#2f3948' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#17263c' }],
+  },
+];
+
+const lightMapStyle = [
+  {
+    featureType: 'all',
+    elementType: 'labels.text.fill',
+    stylers: [{ saturation: 36 }, { color: '#333333' }, { lightness: 40 }],
+  },
+  {
+    featureType: 'all',
+    elementType: 'labels.text.stroke',
+    stylers: [{ visibility: 'on' }, { color: '#ffffff' }, { lightness: 16 }],
+  },
+  {
+    featureType: 'all',
+    elementType: 'labels.icon',
+    stylers: [{ visibility: 'off' }],
+  },
+  {
+    featureType: 'administrative',
+    elementType: 'geometry.fill',
+    stylers: [{ color: '#fefefe' }, { lightness: 20 }],
+  },
+  {
+    featureType: 'administrative',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#fefefe' }, { lightness: 17 }, { weight: 1.2 }],
+  },
+  {
+    featureType: 'landscape',
+    elementType: 'geometry',
+    stylers: [{ color: '#f5f5f5' }, { lightness: 20 }],
+  },
+  {
+    featureType: 'poi',
+    elementType: 'geometry',
+    stylers: [{ color: '#f5f5f5' }, { lightness: 21 }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.fill',
+    stylers: [{ color: '#ffffff' }, { lightness: 17 }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#ffffff' }, { lightness: 29 }, { weight: 0.2 }],
+  },
+  {
+    featureType: 'road.arterial',
+    elementType: 'geometry',
+    stylers: [{ color: '#ffffff' }, { lightness: 18 }],
+  },
+  {
+    featureType: 'road.local',
+    elementType: 'geometry',
+    stylers: [{ color: '#ffffff' }, { lightness: 16 }],
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#f2f2f2' }, { lightness: 19 }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#e9e9e9' }, { lightness: 17 }],
+  },
+];

@@ -12,7 +12,17 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Edit3, Trash2, Calendar, Gauge, Palette, Car, Tag, Fingerprint } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Edit3,
+  Trash2,
+  Calendar,
+  Gauge,
+  Palette,
+  Car,
+  Tag,
+  Fingerprint,
+} from 'lucide-react-native';
 // Vehicle type can be imported from DataContext if preferred, or keep mock/vehiclesData for type only
 import { Vehicle } from '@/mock/vehiclesData';
 import { useData } from '@/context/DataContext'; // Import useData
@@ -43,9 +53,16 @@ export default function VehicleDetailScreen() {
           style: 'destructive',
           onPress: () => {
             contextDeleteVehicle(vehicle.id); // Use context function
-            Alert.alert('Vehicle Deleted', `${vehicle.make} ${vehicle.model} has been removed.`, [
-              { text: 'OK', onPress: () => router.replace('/(tabs)/vehicles') },
-            ]);
+            Alert.alert(
+              'Vehicle Deleted',
+              `${vehicle.make} ${vehicle.model} has been removed.`,
+              [
+                {
+                  text: 'OK',
+                  onPress: () => router.replace('/(tabs)/vehicles'),
+                },
+              ]
+            );
           },
         },
       ],
@@ -55,12 +72,33 @@ export default function VehicleDetailScreen() {
 
   if (!vehicle) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.white, justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDark ? colors.gray[50] : colors.white,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        ]}
+      >
         <StatusBar style={isDark ? 'light' : 'dark'} />
-        <Text style={[typography.h3, { color: isDark ? colors.white : colors.gray[900], textAlign: 'center', marginBottom: spacing.md }]}>
+        <Text
+          style={[
+            typography.h3,
+            {
+              color: isDark ? colors.white : colors.gray[900],
+              textAlign: 'center',
+              marginBottom: spacing.md,
+            },
+          ]}
+        >
           Vehicle Not Found
         </Text>
-        <Button title="Go to My Vehicles" onPress={() => router.replace('/(tabs)/vehicles')} />
+        <Button
+          title="Go to My Vehicles"
+          onPress={() => router.replace('/(tabs)/vehicles')}
+        />
       </SafeAreaView>
     );
   }
@@ -75,50 +113,122 @@ export default function VehicleDetailScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.white }]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.white },
+      ]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      <View style={[styles.header, { backgroundColor: isDark ? colors.gray[100] : colors.primary[500], borderBottomColor: isDark ? colors.gray[200] : colors.primary[600] }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft color={isDark ? colors.primary[500] : colors.white} size={spacing.iconSize.large} />
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: isDark ? colors.gray[100] : colors.primary[500],
+            borderBottomColor: isDark ? colors.gray[200] : colors.primary[600],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <ArrowLeft
+            color={isDark ? colors.primary[500] : colors.white}
+            size={spacing.iconSize.large}
+          />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, typography.h3, { color: isDark ? colors.primary[500] : colors.white }]}>
+        <Text
+          style={[
+            styles.headerTitle,
+            typography.h3,
+            { color: isDark ? colors.primary[500] : colors.white },
+          ]}
+        >
           {vehicle.year} {vehicle.make} {vehicle.model}
         </Text>
         <View style={{ width: spacing.iconSize.large }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: vehicle.image || `https://picsum.photos/seed/${vehicle.id}/800/600` }} style={styles.vehicleImage} />
+        <Image
+          source={{
+            uri:
+              vehicle.image ||
+              `https://ui-avatars.com/api/?name=${vehicle.make}`,
+          }}
+          style={styles.vehicleImage}
+        />
 
         <View style={styles.detailsContainer}>
           {detailItems.map((item, index) => (
-            <View key={index} style={[styles.detailItem, { borderBottomColor: isDark ? colors.gray[200] : colors.gray[100] }]}>
-              <item.icon color={colors.primary[500]} size={spacing.iconSize.medium} style={styles.detailIcon} />
+            <View
+              key={index}
+              style={[
+                styles.detailItem,
+                {
+                  borderBottomColor: isDark
+                    ? colors.gray[200]
+                    : colors.gray[100],
+                },
+              ]}
+            >
+              <item.icon
+                color={colors.primary[500]}
+                size={spacing.iconSize.medium}
+                style={styles.detailIcon}
+              />
               <View>
-                <Text style={[typography.caption, { color: isDark ? colors.gray[600] : colors.gray[500] }]}>{item.label}</Text>
-                <Text style={[typography.body1, { color: isDark ? colors.white : colors.gray[900] }]}>{item.value}</Text>
+                <Text
+                  style={[
+                    typography.caption,
+                    { color: isDark ? colors.gray[600] : colors.gray[500] },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+                <Text
+                  style={[
+                    typography.body1,
+                    { color: isDark ? colors.white : colors.gray[900] },
+                  ]}
+                >
+                  {item.value}
+                </Text>
               </View>
             </View>
           ))}
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: isDark ? colors.gray[100] : colors.white, borderTopColor: isDark ? colors.gray[200] : colors.gray[100] }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: isDark ? colors.gray[100] : colors.white,
+            borderTopColor: isDark ? colors.gray[200] : colors.gray[100],
+          },
+        ]}
+      >
         <Button
           title="Edit Vehicle"
           onPress={handleEdit}
           variant="outline"
           style={styles.actionButton}
-          leftIcon={<Edit3 color={colors.primary[500]} size={spacing.iconSize.small} />}
-          textStyle={{ color: colors.primary[500]}}
+          leftIcon={
+            <Edit3 color={colors.primary[500]} size={spacing.iconSize.small} />
+          }
+          textStyle={{ color: colors.primary[500] }}
         />
         <Button
           title="Delete Vehicle"
           onPress={handleDelete}
           variant="danger"
           style={styles.actionButton}
-          leftIcon={<Trash2 color={colors.white} size={spacing.iconSize.small} />}
+          leftIcon={
+            <Trash2 color={colors.white} size={spacing.iconSize.small} />
+          }
         />
       </View>
     </SafeAreaView>
