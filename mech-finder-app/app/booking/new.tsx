@@ -22,10 +22,12 @@ import {
 } from 'lucide-react-native';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { Mechanic } from '@/mock/mechanicsData'; // Keep type
 import { Vehicle } from '@/mock/vehiclesData'; // Keep type
-import { Booking } from '@/mock/bookingsData'; // Keep type
+import { Booking, BookingStatus } from '@/mock/bookingsData'; // Keep type
 import { useData } from '@/context/DataContext'; // Import useData
 // Note: A proper DateTimePicker and Select/Picker component would be ideal here.
 // For now, using Inputs and simple selection.
@@ -139,7 +141,7 @@ export default function NewBookingScreen() {
       return;
     }
 
-    const newBookingData = {
+    const newBookingData: Omit<Booking, 'id'> = {
       mechanicId: mechanic.id,
       mechanicName: mechanic.name,
       mechanicImage: mechanic.profileImage,
@@ -148,30 +150,19 @@ export default function NewBookingScreen() {
       service: selectedService,
       date: bookingDate,
       time: bookingTime,
-      status: 'scheduled', // Default status
+      status: 'scheduled' as BookingStatus, // Default status
       price: mechanic.hourlyRate, // Placeholder price, could be estimated based on service
       location: mechanic.address,
       notes: notes,
     };
-    console.log('[NewBookingScreen] Creating booking with data:', newBookingData);
+    console.log(
+      '[NewBookingScreen] Creating booking with data:',
+      newBookingData
+    );
 
     contextAddBooking(newBookingData); // Use context function
     // Note: The ID is generated within contextAddBooking, so we can't log it here directly
     // unless contextAddBooking returns the new booking or its ID.
-
-    Alert.alert(
-      mechanicName: mechanic.name,
-      mechanicImage: mechanic.profileImage,
-      vehicleId: vehicle.id,
-      vehicleName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-      service: selectedService,
-      date: bookingDate,
-      time: bookingTime,
-      status: 'scheduled', // Default status
-      price: mechanic.hourlyRate, // Placeholder price, could be estimated based on service
-      location: mechanic.address,
-      notes: notes,
-    });
 
     Alert.alert(
       'Booking Requested',
@@ -359,7 +350,12 @@ export default function NewBookingScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.mechanicInfoContainer, { borderBottomColor: isDark ? colors.gray[200] : colors.gray[100]}]}>
+        <View
+          style={[
+            styles.mechanicInfoContainer,
+            { borderBottomColor: isDark ? colors.gray[200] : colors.gray[100] },
+          ]}
+        >
           <Text
             style={[
               typography.h4,
@@ -378,13 +374,21 @@ export default function NewBookingScreen() {
           {renderServiceSelector()}
 
           {/* Date Picker Input */}
-          <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.inputContainer}>
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            style={styles.inputContainer}
+          >
             <Input
               label="Preferred Date"
               value={bookingDate}
               editable={false} // Make it not directly editable
               placeholder="Select a date"
-              leftIcon={<Calendar color={colors.gray[500]} size={spacing.iconSize.medium} />}
+              leftIcon={
+                <Calendar
+                  color={colors.gray[500]}
+                  size={spacing.iconSize.medium}
+                />
+              }
             />
           </TouchableOpacity>
           {showDatePicker && (
@@ -399,13 +403,21 @@ export default function NewBookingScreen() {
           )}
 
           {/* Time Picker Input */}
-          <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.inputContainer}>
+          <TouchableOpacity
+            onPress={() => setShowTimePicker(true)}
+            style={styles.inputContainer}
+          >
             <Input
               label="Preferred Time"
               value={bookingTime}
               editable={false} // Make it not directly editable
               placeholder="Select a time"
-              leftIcon={<Clock color={colors.gray[500]} size={spacing.iconSize.medium} />}
+              leftIcon={
+                <Clock
+                  color={colors.gray[500]}
+                  size={spacing.iconSize.medium}
+                />
+              }
             />
           </TouchableOpacity>
           {showTimePicker && (
