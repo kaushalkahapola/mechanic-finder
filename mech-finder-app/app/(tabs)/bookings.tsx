@@ -22,6 +22,7 @@ export default function BookingsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const handleBookingPress = (booking: Booking) => {
+    console.log('[BookingsScreen] Navigating to booking detail for ID:', booking.id);
     router.push({
       pathname: `/booking/${booking.id}`, // Corrected path
       params: { id: booking.id }

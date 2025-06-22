@@ -14,7 +14,6 @@ export default function AuthLayout() {
         headerTitleStyle: {
           fontFamily: 'Inter-SemiBold',
         },
-        headerBackTitleVisible: false,
         headerShadowVisible: false,
       }}
     >

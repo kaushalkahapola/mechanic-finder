@@ -24,8 +24,8 @@ import {
   CheckCircle,
   AlertTriangle,
 } from 'lucide-react-native';
-import { Booking, BookingStatus } from '@/mock/bookingsData'; // Keep type
-import { useData } from '@/context/DataContext'; // Import useData
+import { Booking, BookingStatus } from '@/mock/bookingsData';
+import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/Button';
 
 const getStatusStyle = (status: BookingStatus, colors: any) => {
@@ -33,9 +33,9 @@ const getStatusStyle = (status: BookingStatus, colors: any) => {
     case 'scheduled':
       return {
         text: 'Scheduled',
-        color: colors.info[500],
-        icon: <Calendar color={colors.info[500]} size={18} />,
-        backgroundColor: colors.info[100],
+        color: colors.primary[500],
+        icon: <Calendar color={colors.primary[500]} size={18} />,
+        backgroundColor: colors.primary[100],
       };
     case 'in_progress':
       return {
@@ -71,27 +71,22 @@ const getStatusStyle = (status: BookingStatus, colors: any) => {
 export default function BookingDetailScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getBookingById, updateBookingStatus: contextUpdateBookingStatus } =
-    useData(); // Get context functions
 
-  // Use a local state for booking to reflect immediate UI changes upon cancellation,
-  // while the source of truth is updated via context.
-  const [booking, setBooking] = useState<Booking | undefined>(() =>
-    getBookingById(id || '')
-  );
+  const { getBookingById, updateBookingStatus: contextUpdateBookingStatus } =
+    useData();
+
+  const [booking, setBooking] = useState<Booking | undefined>(undefined);
 
   useEffect(() => {
-    // This effect ensures that if the booking data changes in the context
-    // (e.g. due to a background update, though not applicable here with pure client state),
-    // the local view is updated. For cancellation, we update local state first for responsiveness.
-    const freshBooking = getBookingById(id || '');
-    if (JSON.stringify(freshBooking) !== JSON.stringify(booking)) {
+    if (id) {
+      const freshBooking = getBookingById(id);
       setBooking(freshBooking);
     }
-  }, [id, getBookingById, booking]);
+  }, [id, getBookingById]);
 
   const handleCancelBooking = () => {
     if (!booking || !id) return;
+
     Alert.alert(
       'Cancel Booking',
       `Are you sure you want to cancel this booking for ${booking.service} on ${booking.date}?`,
@@ -101,8 +96,7 @@ export default function BookingDetailScreen() {
           text: 'Yes, Cancel',
           style: 'destructive',
           onPress: () => {
-            contextUpdateBookingStatus(id, 'cancelled'); // Use context function
-            // Update local state immediately for UI responsiveness
+            contextUpdateBookingStatus(id, 'cancelled');
             setBooking((prev) =>
               prev ? { ...prev, status: 'cancelled' } : undefined
             );
@@ -118,16 +112,66 @@ export default function BookingDetailScreen() {
     );
   };
 
+  if (!id) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <Text
+          style={[
+            typography.h3,
+            {
+              color: isDark ? colors.white : colors.gray[900],
+              textAlign: 'center',
+              marginBottom: spacing.md,
+            },
+          ]}
+        >
+          Invalid Booking ID
+        </Text>
+        <Button
+          title="Go to My Bookings"
+          onPress={() => router.replace('/(tabs)/bookings')}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (booking === undefined) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <Text
+          style={[
+            typography.h3,
+            {
+              color: isDark ? colors.white : colors.gray[900],
+              textAlign: 'center',
+              marginBottom: spacing.md,
+            },
+          ]}
+        >
+          Loading Booking Details...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   if (!booking) {
     return (
       <SafeAreaView
         style={[
           styles.container,
-          {
-            backgroundColor: isDark ? colors.gray[50] : colors.white,
-            justifyContent: 'center',
-            alignItems: 'center',
-          },
+          { justifyContent: 'center', alignItems: 'center' },
         ]}
       >
         <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -154,10 +198,15 @@ export default function BookingDetailScreen() {
   const statusStyle = getStatusStyle(booking.status, colors);
 
   const detailItems = [
-    { icon: Car, label: 'Service', value: booking.service },
-    { icon: Car, label: 'Vehicle', value: booking.vehicleName },
-    { icon: MapPin, label: 'Location', value: booking.location },
-    { icon: DollarSign, label: 'Price', value: `$${booking.price.toFixed(2)}` },
+    { icon: Car, label: 'Service', value: booking.service || 'N/A' },
+    { icon: Car, label: 'Vehicle', value: booking.vehicleName || 'N/A' },
+    { icon: MapPin, label: 'Location', value: booking.location || 'N/A' },
+    {
+      icon: DollarSign,
+      label: 'Price',
+      value:
+        booking.price !== undefined ? `$${booking.price.toFixed(2)}` : 'N/A',
+    },
     {
       icon: FileText,
       label: 'Notes',
@@ -235,7 +284,12 @@ export default function BookingDetailScreen() {
             </View>
           </View>
 
-          <View style={styles.dateTimeSection}>
+          <View
+            style={[
+              styles.dateTimeSection,
+              { borderColor: isDark ? colors.gray[200] : colors.gray[100] },
+            ]}
+          >
             <View style={styles.dateTimeItem}>
               <Calendar
                 color={colors.primary[500]}
@@ -304,7 +358,7 @@ export default function BookingDetailScreen() {
                 {
                   borderBottomColor: isDark
                     ? colors.gray[200]
-                    : colors.gray[50],
+                    : colors.gray[100],
                 },
               ]}
             >
@@ -362,9 +416,7 @@ export default function BookingDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -372,20 +424,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    // borderBottomColor: '#eee',  // Will be set in component style directly
   },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontWeight: '600',
-    textAlign: 'center',
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-    padding: 16,
-  },
+  backButton: { padding: 8 },
+  headerTitle: { fontWeight: '600', textAlign: 'center', flex: 1 },
+  scrollContent: { paddingBottom: 100, padding: 16 },
   card: {
     borderRadius: 12,
     padding: 16,
@@ -401,12 +443,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  mechanicImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
-  },
+  mechanicImage: { width: 60, height: 60, borderRadius: 30, marginRight: 16 },
   dateTimeSection: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -414,12 +451,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    // borderColor: '#eee', // Will be set in component style directly
   },
-  dateTimeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  dateTimeItem: { flexDirection: 'row', alignItems: 'center' },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -444,13 +477,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
   },
-  detailIcon: {
-    marginRight: 16,
-    marginTop: 2,
-  },
-  detailTextContainer: {
-    flex: 1,
-  },
+  detailIcon: { marginRight: 16, marginTop: 2 },
+  detailTextContainer: { flex: 1 },
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -459,7 +487,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 24,
     borderTopWidth: 1,
-    // borderTopColor: '#eee', // Will be set in component style directly
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },

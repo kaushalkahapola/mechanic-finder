@@ -22,8 +22,8 @@ export default function VehiclesScreen() {
 
   const handleVehiclePress = (vehicle: Vehicle) => {
     router.push({
-      pathname: `/vehicle/${vehicle.id}`, // Corrected path
-      params: { id: vehicle.id }
+      pathname: '/vehicle/[id]', // Use dynamic route format
+      params: { id: vehicle.id },
     });
   };
 
@@ -32,9 +32,14 @@ export default function VehiclesScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] }]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] },
+      ]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+
       <View style={styles.header}>
         <Text
           style={[
@@ -59,7 +64,10 @@ export default function VehiclesScreen() {
           data={contextVehicles} // Use vehicles from context
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <VehicleCard vehicle={item} onPress={() => handleVehiclePress(item)} /> // Pass item to handler
+            <VehicleCard
+              vehicle={item}
+              onPress={() => handleVehiclePress(item)}
+            /> // Pass item to handler
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.vehiclesList}
@@ -78,7 +86,9 @@ export default function VehiclesScreen() {
           <Button
             title="Add Your First Vehicle"
             variant="primary"
-            leftIcon={<Plus color={colors.white} size={spacing.iconSize.medium} />}
+            leftIcon={
+              <Plus color={colors.white} size={spacing.iconSize.medium} />
+            }
             onPress={handleAddVehicle}
             style={styles.addButton}
           />

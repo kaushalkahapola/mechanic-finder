@@ -11,7 +11,11 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { router } from 'expo-router';
-import { Mail, ArrowLeft, CircleCheck as CheckCircle } from 'lucide-react-native';
+import {
+  Mail,
+  ArrowLeft,
+  CircleCheck as CheckCircle,
+} from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -26,7 +30,7 @@ export default function ForgotPasswordScreen() {
 
   const handleSubmit = async (values: { email: string }) => {
     setIsLoading(true);
-    
+
     // Simulate API call delay
     setTimeout(() => {
       // In a real app, you would send a password reset email through your API
@@ -37,20 +41,13 @@ export default function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.white }]}
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.white },
+      ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Button
-            variant="ghost"
-            title="Back"
-            leftIcon={<ArrowLeft color={colors.primary[500]} size={spacing.iconSize.medium} />}
-            onPress={() => router.back()}
-            style={styles.backButton}
-          />
-        </View>
-
         {isSuccess ? (
           <View style={styles.successContainer}>
             <CheckCircle
@@ -71,7 +68,10 @@ export default function ForgotPasswordScreen() {
               style={[
                 styles.subtitle,
                 typography.body1,
-                { color: isDark ? colors.gray[600] : colors.gray[600], textAlign: 'center' },
+                {
+                  color: isDark ? colors.gray[600] : colors.gray[600],
+                  textAlign: 'center',
+                },
               ]}
             >
               We've sent password reset instructions to your email address.
@@ -109,7 +109,14 @@ export default function ForgotPasswordScreen() {
               validationSchema={forgotPasswordSchema}
               onSubmit={handleSubmit}
             >
-              {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+              {({
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                values,
+                errors,
+                touched,
+              }) => (
                 <View style={styles.form}>
                   <Input
                     label="Email"
@@ -119,8 +126,15 @@ export default function ForgotPasswordScreen() {
                     value={values.email}
                     onChangeText={handleChange('email')}
                     onBlur={handleBlur('email')}
-                    error={touched.email && errors.email ? errors.email : undefined}
-                    leftIcon={<Mail color={colors.gray[500]} size={spacing.iconSize.medium} />}
+                    error={
+                      touched.email && errors.email ? errors.email : undefined
+                    }
+                    leftIcon={
+                      <Mail
+                        color={colors.gray[500]}
+                        size={spacing.iconSize.medium}
+                      />
+                    }
                   />
 
                   <Button
