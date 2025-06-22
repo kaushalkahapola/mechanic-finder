@@ -13,7 +13,20 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '@/theme/ThemeProvider';
 import { router } from 'expo-router';
-import { User, Mail, Phone, Settings, Bell, Moon, LogOut, ChevronRight, Key, ShieldCheck, CircleHelp as HelpCircle, FileText } from 'lucide-react-native';
+import {
+  User,
+  Mail,
+  Phone,
+  Settings,
+  Bell,
+  Moon,
+  LogOut,
+  ChevronRight,
+  Key,
+  ShieldCheck,
+  CircleHelp as HelpCircle,
+  FileText,
+} from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useData } from '@/context/DataContext'; // Import useData
 
@@ -35,8 +48,8 @@ export default function ProfileScreen() {
   };
 
   const navigateToStaticPage = (path: string) => {
-    router.push(path);
-  }
+    router.push(path as any);
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -66,9 +79,14 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] }]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] },
+      ]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View
@@ -78,7 +96,11 @@ export default function ProfileScreen() {
             ]}
           >
             <Image
-              source={{ uri: user.profileImage || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }} // Use user.profileImage
+              source={{
+                uri:
+                  user.profileImage ||
+                  'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+              }} // Use user.profileImage
               style={styles.profileImage}
             />
             <Text
@@ -97,12 +119,7 @@ export default function ProfileScreen() {
               ]}
               onPress={handleEditProfile}
             >
-              <Text
-                style={[
-                  typography.button,
-                  { color: colors.white },
-                ]}
-              >
+              <Text style={[typography.button, { color: colors.white }]}>
                 Edit Profile
               </Text>
             </TouchableOpacity>
@@ -212,8 +229,13 @@ export default function ProfileScreen() {
             <Switch
               value={notificationsEnabled}
               onValueChange={handleNotificationsToggle}
-              trackColor={{ false: colors.gray[300], true: colors.primary[400] }}
-              thumbColor={notificationsEnabled ? colors.primary[500] : colors.gray[100]}
+              trackColor={{
+                false: colors.gray[300],
+                true: colors.primary[400],
+              }}
+              thumbColor={
+                notificationsEnabled ? colors.primary[500] : colors.gray[100]
+              }
             />
           </View>
 
@@ -231,7 +253,10 @@ export default function ProfileScreen() {
             <Switch
               value={isDark}
               onValueChange={handleDarkModeToggle}
-              trackColor={{ false: colors.gray[300], true: colors.primary[400] }}
+              trackColor={{
+                false: colors.gray[300],
+                true: colors.primary[400],
+              }}
               thumbColor={isDark ? colors.primary[500] : colors.gray[100]}
             />
           </View>
@@ -243,7 +268,15 @@ export default function ProfileScreen() {
             { backgroundColor: isDark ? colors.gray[100] : colors.white },
           ]}
         >
-          <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert("Feature not implemented", "Changing password is not yet available.")}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() =>
+              Alert.alert(
+                'Feature not implemented',
+                'Changing password is not yet available.'
+              )
+            }
+          >
             <View style={styles.menuIconContainer}>
               <Key color={colors.primary[500]} size={spacing.iconSize.medium} />
             </View>
@@ -256,12 +289,21 @@ export default function ProfileScreen() {
             >
               Change Password
             </Text>
-            <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
+            <ChevronRight
+              color={colors.gray[500]}
+              size={spacing.iconSize.medium}
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigateToStaticPage('/profile/privacy')}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigateToStaticPage('/profile/privacy')}
+          >
             <View style={styles.menuIconContainer}>
-              <ShieldCheck color={colors.primary[500]} size={spacing.iconSize.medium} />
+              <ShieldCheck
+                color={colors.primary[500]}
+                size={spacing.iconSize.medium}
+              />
             </View>
             <Text
               style={[
@@ -272,12 +314,21 @@ export default function ProfileScreen() {
             >
               Privacy Policy
             </Text>
-            <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
+            <ChevronRight
+              color={colors.gray[500]}
+              size={spacing.iconSize.medium}
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigateToStaticPage('/profile/help')}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigateToStaticPage('/profile/help')}
+          >
             <View style={styles.menuIconContainer}>
-              <HelpCircle color={colors.primary[500]} size={spacing.iconSize.medium} />
+              <HelpCircle
+                color={colors.primary[500]}
+                size={spacing.iconSize.medium}
+              />
             </View>
             <Text
               style={[
@@ -288,12 +339,21 @@ export default function ProfileScreen() {
             >
               Help & Support
             </Text>
-            <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
+            <ChevronRight
+              color={colors.gray[500]}
+              size={spacing.iconSize.medium}
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigateToStaticPage('/profile/terms')}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigateToStaticPage('/profile/terms')}
+          >
             <View style={styles.menuIconContainer}>
-              <FileText color={colors.primary[500]} size={spacing.iconSize.medium} />
+              <FileText
+                color={colors.primary[500]}
+                size={spacing.iconSize.medium}
+              />
             </View>
             <Text
               style={[
@@ -304,7 +364,10 @@ export default function ProfileScreen() {
             >
               Terms & Conditions
             </Text>
-            <ChevronRight color={colors.gray[500]} size={spacing.iconSize.medium} />
+            <ChevronRight
+              color={colors.gray[500]}
+              size={spacing.iconSize.medium}
+            />
           </TouchableOpacity>
         </View>
 
