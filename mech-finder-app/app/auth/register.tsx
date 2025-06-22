@@ -48,7 +48,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async (values: RegisterValues) => {
     setIsLoading(true);
-    
+
     // Simulate API call delay
     setTimeout(async () => {
       try {
@@ -67,7 +67,10 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.white }]}
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.white },
+      ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
@@ -104,12 +107,20 @@ export default function RegisterScreen() {
               phone: '',
               password: '',
               confirmPassword: '',
-              role: 'user' as const,
+              role: 'user',
             }}
             validationSchema={registerSchema}
             onSubmit={handleRegister}
           >
-            {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched }) => (
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              setFieldValue,
+              values,
+              errors,
+              touched,
+            }) => (
               <View style={styles.form}>
                 <Input
                   label="Full Name"
@@ -118,7 +129,12 @@ export default function RegisterScreen() {
                   onChangeText={handleChange('name')}
                   onBlur={handleBlur('name')}
                   error={touched.name && errors.name ? errors.name : undefined}
-                  leftIcon={<User color={colors.gray[500]} size={spacing.iconSize.medium} />}
+                  leftIcon={
+                    <User
+                      color={colors.gray[500]}
+                      size={spacing.iconSize.medium}
+                    />
+                  }
                 />
 
                 <Input
@@ -129,8 +145,15 @@ export default function RegisterScreen() {
                   value={values.email}
                   onChangeText={handleChange('email')}
                   onBlur={handleBlur('email')}
-                  error={touched.email && errors.email ? errors.email : undefined}
-                  leftIcon={<Mail color={colors.gray[500]} size={spacing.iconSize.medium} />}
+                  error={
+                    touched.email && errors.email ? errors.email : undefined
+                  }
+                  leftIcon={
+                    <Mail
+                      color={colors.gray[500]}
+                      size={spacing.iconSize.medium}
+                    />
+                  }
                 />
 
                 <Input
@@ -140,8 +163,15 @@ export default function RegisterScreen() {
                   value={values.phone}
                   onChangeText={handleChange('phone')}
                   onBlur={handleBlur('phone')}
-                  error={touched.phone && errors.phone ? errors.phone : undefined}
-                  leftIcon={<Phone color={colors.gray[500]} size={spacing.iconSize.medium} />}
+                  error={
+                    touched.phone && errors.phone ? errors.phone : undefined
+                  }
+                  leftIcon={
+                    <Phone
+                      color={colors.gray[500]}
+                      size={spacing.iconSize.medium}
+                    />
+                  }
                 />
 
                 <Input
@@ -150,8 +180,17 @@ export default function RegisterScreen() {
                   value={values.password}
                   onChangeText={handleChange('password')}
                   onBlur={handleBlur('password')}
-                  error={touched.password && errors.password ? errors.password : undefined}
-                  leftIcon={<Lock color={colors.gray[500]} size={spacing.iconSize.medium} />}
+                  error={
+                    touched.password && errors.password
+                      ? errors.password
+                      : undefined
+                  }
+                  leftIcon={
+                    <Lock
+                      color={colors.gray[500]}
+                      size={spacing.iconSize.medium}
+                    />
+                  }
                   isPassword
                 />
 
@@ -166,7 +205,12 @@ export default function RegisterScreen() {
                       ? errors.confirmPassword
                       : undefined
                   }
-                  leftIcon={<Lock color={colors.gray[500]} size={spacing.iconSize.medium} />}
+                  leftIcon={
+                    <Lock
+                      color={colors.gray[500]}
+                      size={spacing.iconSize.medium}
+                    />
+                  }
                   isPassword
                 />
 
@@ -174,32 +218,50 @@ export default function RegisterScreen() {
                   style={[
                     styles.sectionTitle,
                     typography.subtitle2,
-                    { color: isDark ? colors.white : colors.gray[900], marginTop: 8 },
+                    {
+                      color: isDark ? colors.white : colors.gray[900],
+                      marginTop: 8,
+                    },
                   ]}
                 >
                   I am a:
                 </Text>
-                
+
                 <View style={styles.roleSelector}>
                   <TouchableOpacity
                     style={[
                       styles.roleButton,
                       {
-                        backgroundColor: values.role === 'user' ? colors.primary[500] : (isDark ? colors.gray[100] : colors.white),
-                        borderColor: values.role === 'user' ? colors.primary[500] : colors.gray[300],
+                        backgroundColor:
+                          values.role === 'user'
+                            ? colors.primary[500]
+                            : isDark
+                            ? colors.gray[100]
+                            : colors.white,
+                        borderColor:
+                          values.role === 'user'
+                            ? colors.primary[500]
+                            : colors.gray[300],
                       },
                     ]}
                     onPress={() => setFieldValue('role', 'user')}
                   >
                     <User
-                      color={values.role === 'user' ? colors.white : colors.gray[500]}
+                      color={
+                        values.role === 'user' ? colors.white : colors.gray[500]
+                      }
                       size={spacing.iconSize.medium}
                     />
                     <Text
                       style={[
                         typography.button,
                         {
-                          color: values.role === 'user' ? colors.white : (isDark ? colors.gray[700] : colors.gray[700]),
+                          color:
+                            values.role === 'user'
+                              ? colors.white
+                              : isDark
+                              ? colors.gray[700]
+                              : colors.gray[700],
                           marginLeft: spacing.sm,
                         },
                       ]}
@@ -212,21 +274,38 @@ export default function RegisterScreen() {
                     style={[
                       styles.roleButton,
                       {
-                        backgroundColor: values.role === 'mechanic' ? colors.primary[500] : (isDark ? colors.gray[100] : colors.white),
-                        borderColor: values.role === 'mechanic' ? colors.primary[500] : colors.gray[300],
+                        backgroundColor:
+                          values.role === 'mechanic'
+                            ? colors.primary[500]
+                            : isDark
+                            ? colors.gray[100]
+                            : colors.white,
+                        borderColor:
+                          values.role === 'mechanic'
+                            ? colors.primary[500]
+                            : colors.gray[300],
                       },
                     ]}
                     onPress={() => setFieldValue('role', 'mechanic')}
                   >
                     <UserCog
-                      color={values.role === 'mechanic' ? colors.white : colors.gray[500]}
+                      color={
+                        values.role === 'mechanic'
+                          ? colors.white
+                          : colors.gray[500]
+                      }
                       size={spacing.iconSize.medium}
                     />
                     <Text
                       style={[
                         typography.button,
                         {
-                          color: values.role === 'mechanic' ? colors.white : (isDark ? colors.gray[700] : colors.gray[700]),
+                          color:
+                            values.role === 'mechanic'
+                              ? colors.white
+                              : isDark
+                              ? colors.gray[700]
+                              : colors.gray[700],
                           marginLeft: spacing.sm,
                         },
                       ]}
