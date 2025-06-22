@@ -12,16 +12,17 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { VehicleCard } from '@/components/vehicle/VehicleCard';
-import { Vehicle, vehiclesData } from '@/mock/vehiclesData';
+import { Vehicle } from '@/mock/vehiclesData'; // Keep type
+import { useData } from '@/context/DataContext'; // Import useData
 import { Button } from '@/components/ui/Button';
 
 export default function VehiclesScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
-  const [vehicles, setVehicles] = useState(vehiclesData);
+  const { vehicles: contextVehicles } = useData(); // Get vehicles from context
 
   const handleVehiclePress = (vehicle: Vehicle) => {
     router.push({
-      pathname: '/vehicle/[id]',
+      pathname: `/vehicle/${vehicle.id}`, // Corrected path
       params: { id: vehicle.id }
     });
   };
@@ -53,12 +54,12 @@ export default function VehiclesScreen() {
         />
       </View>
 
-      {vehicles.length > 0 ? (
+      {contextVehicles.length > 0 ? (
         <FlatList
-          data={vehicles}
+          data={contextVehicles} // Use vehicles from context
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <VehicleCard vehicle={item} onPress={handleVehiclePress} />
+            <VehicleCard vehicle={item} onPress={() => handleVehiclePress(item)} /> // Pass item to handler
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.vehiclesList}

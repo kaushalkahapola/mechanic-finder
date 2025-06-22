@@ -23,15 +23,17 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-import { mechanicsData } from '@/mock/mechanicsData';
+// import { mechanicsData } from '@/mock/mechanicsData'; // No longer needed directly
+import { useData } from '@/context/DataContext'; // Import useData
 import { Button } from '@/components/ui/Button';
 
 export default function MechanicDetailScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { getMechanicById } = useData(); // Get context function
   const [expanded, setExpanded] = useState(false);
   
-  const mechanic = mechanicsData.find((m) => m.id === id);
+  const mechanic = getMechanicById(id || ''); // Use context getter
 
   if (!mechanic) {
     return (
