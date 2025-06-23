@@ -27,6 +27,7 @@ import {
 import { Booking, BookingStatus } from '@/mock/bookingsData';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 const getStatusStyle = (status: BookingStatus, colors: any) => {
   switch (status) {
@@ -74,6 +75,8 @@ export default function MechanicBookingDetailScreen() {
 
   const { getBookingById, updateBookingStatus: contextUpdateBookingStatus } =
     useData();
+
+  const { user } = useAuth();
 
   const [booking, setBooking] = useState<Booking | undefined>(undefined);
 
@@ -426,18 +429,20 @@ export default function MechanicBookingDetailScreen() {
             },
           ]}
         >
-          <Button
-            title="Accept Booking"
-            onPress={handleAcceptBooking}
-            variant="primary"
-            fullWidth
-            leftIcon={
-              <CheckCircle
-                color={colors.white}
-                size={spacing.iconSize.medium}
-              />
-            }
-          />
+          {user?.type === 'mechanic' && (
+            <Button
+              title="Accept Booking"
+              onPress={handleAcceptBooking}
+              variant="primary"
+              fullWidth
+              leftIcon={
+                <CheckCircle
+                  color={colors.white}
+                  size={spacing.iconSize.medium}
+                />
+              }
+            />
+          )}
           <Button
             title="Cancel Booking"
             onPress={handleCancelBooking}
@@ -450,7 +455,7 @@ export default function MechanicBookingDetailScreen() {
         </View>
       )}
 
-      {booking.status === 'in_progress' && (
+      {user?.type === 'mechanic' && booking.status === 'in_progress' && (
         <View
           style={[
             styles.footer,
