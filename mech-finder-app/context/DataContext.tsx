@@ -61,6 +61,12 @@ interface DataContextType {
   // Mechanics (mostly static, but good to have in context if needed)
   mechanics: Mechanic[];
   getMechanicById: (mechanicId: string) => Mechanic | undefined;
+  updateMechanic: (mechanic: Mechanic) => void;
+  updateMechanicServices: (mechanicId: string, services: string[]) => void;
+  updateMechanicCertifications: (
+    mechanicId: string,
+    certifications: string[]
+  ) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -116,6 +122,27 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateMechanic = (updatedMechanic: Mechanic) => {
+    setMechanics((prev) =>
+      prev.map((m) => (m.id === updatedMechanic.id ? updatedMechanic : m))
+    );
+  };
+
+  const updateMechanicServices = (mechanicId: string, services: string[]) => {
+    setMechanics((prev) =>
+      prev.map((m) => (m.id === mechanicId ? { ...m, services } : m))
+    );
+  };
+
+  const updateMechanicCertifications = (
+    mechanicId: string,
+    certifications: string[]
+  ) => {
+    setMechanics((prev) =>
+      prev.map((m) => (m.id === mechanicId ? { ...m, certifications } : m))
+    );
+  };
+
   const updateBookingStatus = (
     bookingId: string,
     status: Booking['status']
@@ -157,6 +184,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         updateUser,
         mechanics,
         getMechanicById,
+        updateMechanic,
+        updateMechanicServices,
+        updateMechanicCertifications,
       }}
     >
       {children}

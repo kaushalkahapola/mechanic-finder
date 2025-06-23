@@ -22,10 +22,13 @@ export default function BookingsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const handleBookingPress = (booking: Booking) => {
-    console.log('[BookingsScreen] Navigating to booking detail for ID:', booking.id);
+    console.log(
+      '[BookingsScreen] Navigating to booking detail for ID:',
+      booking.id
+    );
     router.push({
-      pathname: `/booking/${booking.id}`, // Corrected path
-      params: { id: booking.id }
+      pathname: '/booking/[id]',
+      params: { id: booking.id },
     });
   };
 
@@ -34,20 +37,22 @@ export default function BookingsScreen() {
     // Ensure date comparisons are valid, e.g., by parsing booking.date
     // For simplicity, assuming date strings are directly comparable or already Date objects
     // If dates are strings like 'YYYY-MM-DD', new Date(booking.date) is fine.
-    
+
     switch (activeFilter) {
       case 'upcoming':
-        return contextBookings.filter( // Use contextBookings
-          (booking) => 
-            new Date(booking.date) >= today && 
-            booking.status !== 'cancelled' && 
+        return contextBookings.filter(
+          // Use contextBookings
+          (booking) =>
+            new Date(booking.date) >= today &&
+            booking.status !== 'cancelled' &&
             booking.status !== 'completed'
         );
       case 'past':
-        return contextBookings.filter( // Use contextBookings
-          (booking) => 
-            new Date(booking.date) < today || 
-            booking.status === 'cancelled' || 
+        return contextBookings.filter(
+          // Use contextBookings
+          (booking) =>
+            new Date(booking.date) < today ||
+            booking.status === 'cancelled' ||
             booking.status === 'completed'
         );
       default:
@@ -58,9 +63,14 @@ export default function BookingsScreen() {
   const filteredBookings = filterBookings();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] }]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] },
+      ]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+
       <View style={styles.header}>
         <Text
           style={[
@@ -93,7 +103,12 @@ export default function BookingsScreen() {
               styles.filterText,
               typography.button,
               {
-                color: activeFilter === 'all' ? colors.white : (isDark ? colors.gray[700] : colors.gray[700]),
+                color:
+                  activeFilter === 'all'
+                    ? colors.white
+                    : isDark
+                    ? colors.gray[700]
+                    : colors.gray[700],
               },
             ]}
           >
@@ -115,7 +130,12 @@ export default function BookingsScreen() {
               styles.filterText,
               typography.button,
               {
-                color: activeFilter === 'upcoming' ? colors.white : (isDark ? colors.gray[700] : colors.gray[700]),
+                color:
+                  activeFilter === 'upcoming'
+                    ? colors.white
+                    : isDark
+                    ? colors.gray[700]
+                    : colors.gray[700],
               },
             ]}
           >
@@ -137,7 +157,12 @@ export default function BookingsScreen() {
               styles.filterText,
               typography.button,
               {
-                color: activeFilter === 'past' ? colors.white : (isDark ? colors.gray[700] : colors.gray[700]),
+                color:
+                  activeFilter === 'past'
+                    ? colors.white
+                    : isDark
+                    ? colors.gray[700]
+                    : colors.gray[700],
               },
             ]}
           >
