@@ -1,9 +1,9 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Car, Calendar, User } from 'lucide-react-native';
+import { LayoutDashboard, UserCog } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 
-export default function TabLayout() {
+export default function MechanicTabLayout() {
   const { colors, spacing, isDark } = useTheme();
 
   return (
@@ -37,37 +37,25 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="dashboard"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
-          headerTitle: 'Mechanic Finder',
-        }}
-      />
-      <Tabs.Screen
-        name="bookings"
-        options={{
-          title: 'Bookings',
+          title: 'Dashboard',
+          href: '/dashboard',
           tabBarIcon: ({ color, size }) => (
-            <Calendar color={color} size={size} />
+            <LayoutDashboard color={color} size={size} />
           ),
-          headerTitle: 'My Bookings',
+          headerTitle: 'Mechanic Dashboard',
         }}
       />
       <Tabs.Screen
-        name="vehicles"
+        name="edit-profile"
         options={{
-          title: 'Vehicles',
-          tabBarIcon: ({ color, size }) => <Car color={color} size={size} />,
-          headerTitle: 'My Vehicles',
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
-          headerTitle: 'My Profile',
+          title: 'Edit Profile',
+          href: '/edit-profile',
+          tabBarIcon: ({ color, size }) => (
+            <UserCog color={color} size={size} />
+          ),
+          headerTitle: 'Edit Profile',
         }}
       />
     </Tabs>
