@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { DataProvider } from '@/context/DataContext'; // Import DataProvider
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useFonts } from 'expo-font';
 import {
   Inter_400Regular,
@@ -12,6 +13,29 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
+
+function RootLayoutNav() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect based on user type
+    if (user) {
+      if (user.type === 'mechanic') {
+        router.replace('/(mechanic)/dashboard');
+      } else {
+        router.replace('/(tabs)');
+      }
+    }
+  }, [user]);
+
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(mechanic)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   useFrameworkReady();

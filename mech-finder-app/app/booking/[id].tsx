@@ -68,7 +68,7 @@ const getStatusStyle = (status: BookingStatus, colors: any) => {
   }
 };
 
-export default function BookingDetailScreen() {
+export default function MechanicBookingDetailScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -83,6 +83,32 @@ export default function BookingDetailScreen() {
       setBooking(freshBooking);
     }
   }, [id, getBookingById]);
+
+  const handleAcceptBooking = () => {
+    if (!booking || !id) return;
+
+    contextUpdateBookingStatus(id, 'in_progress');
+    setBooking((prev) =>
+      prev ? { ...prev, status: 'in_progress' } : undefined
+    );
+    Alert.alert(
+      'Booking Accepted',
+      `You have accepted the booking for ${booking.service} on ${booking.date}.`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleCompleteBooking = () => {
+    if (!booking || !id) return;
+
+    contextUpdateBookingStatus(id, 'completed');
+    setBooking((prev) => (prev ? { ...prev, status: 'completed' } : undefined));
+    Alert.alert(
+      'Booking Completed',
+      `You have completed the booking for ${booking.service} on ${booking.date}.`,
+      [{ text: 'OK' }]
+    );
+  };
 
   const handleCancelBooking = () => {
     if (!booking || !id) return;
@@ -102,7 +128,7 @@ export default function BookingDetailScreen() {
             );
             Alert.alert(
               'Booking Cancelled',
-              `Your booking for ${booking.service} has been cancelled.`,
+              `You have cancelled the booking for ${booking.service}.`,
               [{ text: 'OK', onPress: () => router.back() }]
             );
           },
@@ -134,8 +160,8 @@ export default function BookingDetailScreen() {
           Invalid Booking ID
         </Text>
         <Button
-          title="Go to My Bookings"
-          onPress={() => router.replace('/(tabs)/bookings')}
+          title="Go to Dashboard"
+          onPress={() => router.replace('/(mechanic)/dashboard')}
         />
       </SafeAreaView>
     );
@@ -188,8 +214,8 @@ export default function BookingDetailScreen() {
           Booking Not Found
         </Text>
         <Button
-          title="Go to My Bookings"
-          onPress={() => router.replace('/(tabs)/bookings')}
+          title="Go to Dashboard"
+          onPress={() => router.replace('/(mechanic)/dashboard')}
         />
       </SafeAreaView>
     );
@@ -401,12 +427,49 @@ export default function BookingDetailScreen() {
           ]}
         >
           <Button
+            title="Accept Booking"
+            onPress={handleAcceptBooking}
+            variant="primary"
+            fullWidth
+            leftIcon={
+              <CheckCircle
+                color={colors.white}
+                size={spacing.iconSize.medium}
+              />
+            }
+          />
+          <Button
             title="Cancel Booking"
             onPress={handleCancelBooking}
             variant="danger"
             fullWidth
             leftIcon={
               <XCircle color={colors.white} size={spacing.iconSize.medium} />
+            }
+          />
+        </View>
+      )}
+
+      {booking.status === 'in_progress' && (
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: isDark ? colors.gray[100] : colors.white,
+              borderTopColor: isDark ? colors.gray[200] : colors.gray[100],
+            },
+          ]}
+        >
+          <Button
+            title="Mark as Complete"
+            onPress={handleCompleteBooking}
+            variant="primary"
+            fullWidth
+            leftIcon={
+              <CheckCircle
+                color={colors.white}
+                size={spacing.iconSize.medium}
+              />
             }
           />
         </View>
