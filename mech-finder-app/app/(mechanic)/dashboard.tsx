@@ -118,7 +118,7 @@ export default function MechanicDashboard() {
                 { color: isDark ? colors.white : colors.gray[900] },
               ]}
             >
-              {mechanic.rating} (12 reviews)
+              {mechanic.rating} (0 reviews)
             </Text>
           </View>
           <View style={styles.availabilityContainer}>
@@ -334,7 +334,7 @@ export default function MechanicDashboard() {
                 style={styles.bookingCard}
                 onPress={() =>
                   router.push({
-                    pathname: '/(mechanic)/booking/[id]',
+                    pathname: '/booking/[id]',
                     params: { id: booking.id },
                   })
                 }
@@ -500,7 +500,7 @@ export default function MechanicDashboard() {
         >
           <TouchableOpacity
             style={styles.sectionHeader}
-            onPress={() => router.push('/(mechanic)/edit-services')}
+            onPress={() => router.push('/mechanic/edit-services')}
           >
             <Text
               style={[

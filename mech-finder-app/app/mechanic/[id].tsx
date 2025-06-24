@@ -30,18 +30,26 @@ import { Button } from '@/components/ui/Button';
 export default function MechanicDetailScreen() {
   const { colors, spacing, typography, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getMechanicById } = useData(); // Get context function
+  const { getMechanicById, addBooking } = useData(); // Get context function
   const [expanded, setExpanded] = useState(false);
-  
+
   const mechanic = getMechanicById(id || ''); // Use context getter
 
   if (!mechanic) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] },
+        ]}
+      >
         <Text
           style={[
             typography.h3,
-            { color: isDark ? colors.white : colors.gray[900], textAlign: 'center' },
+            {
+              color: isDark ? colors.white : colors.gray[900],
+              textAlign: 'center',
+            },
           ]}
         >
           Mechanic not found
@@ -58,7 +66,7 @@ export default function MechanicDetailScreen() {
   const handleBookNow = () => {
     router.push({
       pathname: '/booking/new',
-      params: { mechanicId: mechanic.id }
+      params: { mechanicId: mechanic.id },
     });
   };
 
@@ -67,9 +75,14 @@ export default function MechanicDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] }]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? colors.gray[50] : colors.gray[50] },
+      ]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+
       <View style={styles.header}>
         <TouchableOpacity
           style={[
@@ -87,8 +100,11 @@ export default function MechanicDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
-          <Image source={{ uri: mechanic.profileImage }} style={styles.profileImage} />
-          
+          <Image
+            source={{ uri: mechanic.profileImage }}
+            style={styles.profileImage}
+          />
+
           <View style={styles.nameContainer}>
             <Text
               style={[
@@ -99,7 +115,7 @@ export default function MechanicDetailScreen() {
             >
               {mechanic.name}
             </Text>
-            
+
             <View style={styles.ratingContainer}>
               <Star
                 color={colors.warning[500]}
@@ -228,18 +244,19 @@ export default function MechanicDetailScreen() {
               style={styles.expandButton}
               onPress={toggleExpanded}
             >
-              <Text
-                style={[
-                  typography.button,
-                  { color: colors.primary[500] },
-                ]}
-              >
+              <Text style={[typography.button, { color: colors.primary[500] }]}>
                 {expanded ? 'Show Less' : 'Read More'}
               </Text>
               {expanded ? (
-                <ChevronUp color={colors.primary[500]} size={spacing.iconSize.small} />
+                <ChevronUp
+                  color={colors.primary[500]}
+                  size={spacing.iconSize.small}
+                />
               ) : (
-                <ChevronDown color={colors.primary[500]} size={spacing.iconSize.small} />
+                <ChevronDown
+                  color={colors.primary[500]}
+                  size={spacing.iconSize.small}
+                />
               )}
             </TouchableOpacity>
           )}
@@ -266,7 +283,11 @@ export default function MechanicDetailScreen() {
                 key={index}
                 style={[
                   styles.serviceItem,
-                  { backgroundColor: isDark ? colors.gray[200] : colors.gray[100] },
+                  {
+                    backgroundColor: isDark
+                      ? colors.gray[200]
+                      : colors.gray[100],
+                  },
                 ]}
               >
                 <Check
@@ -308,15 +329,14 @@ export default function MechanicDetailScreen() {
                 key={index}
                 style={[
                   styles.certItem,
-                  { backgroundColor: isDark ? colors.primary[600] : colors.primary[500] },
+                  {
+                    backgroundColor: isDark
+                      ? colors.primary[600]
+                      : colors.primary[500],
+                  },
                 ]}
               >
-                <Text
-                  style={[
-                    typography.body2,
-                    { color: colors.white },
-                  ]}
-                >
+                <Text style={[typography.body2, { color: colors.white }]}>
                   {cert}
                 </Text>
               </View>
@@ -340,11 +360,7 @@ export default function MechanicDetailScreen() {
             Pricing
           </Text>
           <Text
-            style={[
-              styles.rate,
-              typography.h3,
-              { color: colors.primary[500] },
-            ]}
+            style={[styles.rate, typography.h3, { color: colors.primary[500] }]}
           >
             ${mechanic.hourlyRate}
           </Text>
@@ -365,11 +381,7 @@ export default function MechanicDetailScreen() {
           { backgroundColor: isDark ? colors.gray[50] : colors.white },
         ]}
       >
-        <Button
-          title="Book Now"
-          onPress={handleBookNow}
-          fullWidth
-        />
+        <Button title="Book Now" onPress={handleBookNow} fullWidth />
       </View>
     </SafeAreaView>
   );

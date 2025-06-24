@@ -136,25 +136,21 @@ export const mechanicsData: Mechanic[] = [
   },
   {
     id: '5',
-    name: 'David Williams',
+    name: 'Mechanic 1',
     profileImage:
       'https://images.pexels.com/photos/8989482/pexels-photo-8989482.jpeg',
-    rating: 4.5,
-    reviewCount: 112,
+    rating: 0,
+    reviewCount: 0,
     distance: 4.7,
-    services: [
-      'Classic Car Restoration',
-      'Performance Upgrades',
-      'Custom Fabrication',
-    ],
-    certifications: ['Restoration Specialist', 'ASE Certified'],
+    services: ['Engine Repair', 'Transmission', 'Brakes'],
+    certifications: ['ASE Certified', 'Toyota Certified'],
     address: '222 Independence Square, Colombo 01, Sri Lanka',
     hourlyRate: 95,
     latitude: 6.929,
     longitude: 79.86,
     about:
       'Classic car enthusiast and professional restorer. Over 25 years working with vintage American and European automobiles. Concours-quality work.',
-    phoneNumber: '(555) 567-8901',
+    phoneNumber: '0717539478',
     email: 'david.williams@example.com',
     availability: {
       days: ['Monday', 'Tuesday', 'Thursday', 'Friday', 'Saturday'],

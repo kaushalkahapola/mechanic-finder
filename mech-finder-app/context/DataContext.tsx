@@ -30,11 +30,11 @@ export interface User {
 // Initial User Data (from profile.tsx)
 const initialUser: User = {
   id: 'user123',
-  name: 'Anushanga Sharada',
-  email: 'anushanga@gmail.com',
+  name: 'User 1',
+  email: 'user1@gmail.com',
   phone: '0111234567',
   profileImage:
-    'https://ui-avatars.com/api/?name=Anushanga+Sharada?background=0D8ABC&color=fff',
+    'https://ui-avatars.com/api/?name=User+1?background=0D8ABC&color=fff',
 };
 
 interface DataContextType {
